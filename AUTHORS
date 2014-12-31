@@ -1,0 +1,22 @@
+In terms of copyright law, Robert J. Hansen <rjh@sixdemonbag.org> is
+the sole copyright holder.  However, nothing good is created in a
+vacuum: lots of people have had a role to play in the development of
+Djinni, and they all deserve their fair credit.
+
+The compressed annealing algorithm is built from a specification from
+Professors Barrett Thomas and Jeffrey Ohlmann at the University of
+Iowa.  These two gentlemen created the first reference implementation
+of the compressed annealing algorithm, which was a tremendous help
+to Hansen while he was creating Djinni 1.0.
+
+During the 2.0 cycle, Tristan Thiede <tthiede@thetiredsaint.com>
+gave a hand with the architectural redesign and did a good bit of the
+coding.  He stayed on through the 2.1 cycle and helped with the
+architectural tweaks that ultimately made it into 2.2.
+
+Professor Justin Goodson <goodson@slu.edu> gave valuable feedback
+during the 2.1 and 2.2 development cycle.  Nothing forces an engineer
+to re-evaluate old designs like a new set of eyes on a project and
+constant questions of, "so why did you do it that way?"  One of his
+questions ultimately led to the tremendous performance improvement
+in Djinni 2.2.1.

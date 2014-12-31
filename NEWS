@@ -1,0 +1,25 @@
+(This NEWS file is no longer maintained, but is kept for
+historical interest.)
+
+Djinni 1.0 was written by Robert J. Hansen <rjh@sixdemonbag.org>,
+based on a codebase originally written by Thomas and Ohlmann.
+
+2.0: Overhauled by Tristan Thiede <tthiede@thetiredsaint.com> and
+     Robert J. Hansen.  Released at CodeCon 2006.
+
+2.1: Massive rearchitecting by Hansen and Thiede.  Released at
+     OSCON 2006.
+
+2.2: Totally overhauled build system, now using CMake instead of
+     Autotools.  Builds on far more systems (including MSVC!) and is
+     far easier to extend.  Praise and/or blame go to Hansen.
+
+2.2.1: Returning to Autotools after some disappointments with CMake.
+     Fixed a memory leak.  No new functionality.  Praise and/or blame
+     go to Hansen.
+
+2.2.2: A code overhaul to the deep back-end resulted in an almost 50%
+     speedup.  The API remains stable.  Praise and/or blame to Hansen.
+
+2.2.3: Justin Goodson has eliminated a small bit of inefficiency in
+     Annealer.h.  The API remains stable.
