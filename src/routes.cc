@@ -59,10 +59,6 @@ TSPTWWorld::TSPTWWorld(const char* filename)
     loadDumas(in, *this);
     computeTravelTimes();
   }
-  else if (line.substr(0, 7) == "VEHICLE") {
-    loadSolomon(in, *this);
-    computeTravelTimes();
-  }
 }
 
 TSPTWWorld::TSPTWWorld(const std::string& filename)
@@ -77,10 +73,6 @@ TSPTWWorld::TSPTWWorld(const std::string& filename)
   getline(in, line);
   if (line.substr(0, 2) == "!!") {
     loadDumas(in, *this);
-    computeTravelTimes();
-  }
-  else if (line.substr(0, 7) == "VEHICLE") {
-    loadSolomon(in, *this);
     computeTravelTimes();
   }
 }
