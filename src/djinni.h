@@ -1,3 +1,3 @@
-#include <djinni/annealers.h>
-#include <djinni/penalties.h>
-#include <djinni/routes.h>
+#include "annealers.h"
+#include "penalties.h"
+#include "routes.h"
