@@ -20,168 +20,159 @@
 
 #include <cmath>
 
-//! A penalty function for annealing which substantially implements the
-//! Ohlmann-Thomas Compression annealing functionality.
 
-/*! Unfortunately, this class does not entirely encapsulate the necessary
-   functionality.  A trivial specialization of the Annealer class is required.
-   Interested parties are referred to the Annealer.initializeParam() method for
-   more details.
+namespace edu::uiowa::tippie::djinni {
+    //! A penalty function for annealing which substantially implements the
+    //! Ohlmann-Thomas Compression annealing functionality.
 
-    @author Hansen, Thiede
-    @since 2.1
-*/
-class Compression {
-public:
-    /*! All PenaltyFuncs must typedef their return value as ReturnType.
+    /*! Unfortunately, this class does not entirely encapsulate the necessary
+       functionality.  A trivial specialization of the Annealer class is required.
+       Interested parties are referred to the Annealer.initializeParam() method for
+       more details.
 
-    For Compression annealing, the lambda value is represented as a double.
-    Hence, we typedef double to ReturnType. */
-    typedef double ReturnType;
-
-    /*! Since each PenaltyFunc must declare the type of its ReturnType,
-    it must also be able to create a default value of that type so that
-    an Annealer can initialize it to the correct value. */
-    constexpr static double defaultReturnTypeValue = 0.0;
-
-    /*! Default constructor.
-
-    Please note that this will create a Compression object with values you
-    probably won't like.  Make sure to set all values appropriately before
-    use. */
-    Compression():
-    _expPower(0),
-    _pressureCap(0),
-    _capPercentage(0) {
-    }
-
-    /*! A constructor which initializes all data members at once.
-
-    This constructor is the one you should probably be using.
-
-    @param expPower The exponential factor involved in compression
-    @param pcap The pressure cap
-    @param cperc The percentage of cap
+        @author Hansen, Thiede
+        @since 2.1
     */
-    Compression(double expPower, double pcap, double cperc)
-        : _expPower(expPower)
-        , _pressureCap(pcap)
-        , _capPercentage(cperc)
-    {
-    }
+    class Compression {
+    public:
+        /*! All PenaltyFuncs must typedef their return value as ReturnType.
 
-    /*! This copy constructor should be entirely unnecessary.
+        For Compression annealing, the lambda value is represented as a double.
+        Hence, we typedef double to ReturnType. */
+        typedef double ReturnType;
 
-    @param pfun The Compression object to be copied */
-    Compression(const Compression& pfun)
-        : _expPower(pfun._expPower)
-        , _pressureCap(pfun._pressureCap)
-        , _capPercentage(pfun._capPercentage)
-    {
-    }
+        /*! Since each PenaltyFunc must declare the type of its ReturnType,
+        it must also be able to create a default value of that type so that
+        an Annealer can initialize it to the correct value. */
+        constexpr static double defaultReturnTypeValue = 0.0;
 
-    /*! A no-op destructor.
+        /*! Default constructor.
 
-    This destructor has been virtualized in case you wish to later subclass off
-    Compression. */
-    virtual ~Compression() { }
+        Please note that this will create a Compression object with values you
+        probably won't like.  Make sure to set all values appropriately before
+        use. */
+        Compression(): _expPower(0),
+                       _pressureCap(0),
+                       _capPercentage(0) {
+        }
 
-    /*! Sets the exponential factor for the compression.
+        /*! A constructor which initializes all data members at once.
 
-    @param power The new exponential power to use */
-    void setPower(const double power) { _expPower = power; }
+        This constructor is the one you should probably be using.
 
-    /*! Sets the pressure cap.
+        @param expPower The exponential factor involved in compression
+        @param pcap The pressure cap
+        @param cperc The percentage of cap
+        */
+        Compression(double expPower, double pcap, double cperc)
+            : _expPower(expPower)
+              , _pressureCap(pcap)
+              , _capPercentage(cperc) {
+        }
 
-    @param cap The new pressure cap to use */
-    void setPressureCap(const double cap) { _pressureCap = cap; }
+        /*! This copy constructor should be entirely unnecessary.
 
-    /*! Sets the percentage of cap to use.
+        @param pfun The Compression object to be copied */
+        Compression(const Compression &pfun) = default;
 
-    @param perc The percentage of cap to use. */
-    void setCapPercentage(const double perc) { _capPercentage = perc; }
+        /*! A no-op destructor.
 
-    /*! Gets the cap percentage.
+        This destructor has been virtualized in case you wish to later subclass off
+        Compression. */
+        virtual ~Compression() = default;
 
-    @return The cap percentage */
-    double getCapPercentage() const { return _capPercentage; }
+        /*! Sets the exponential factor for the compression.
 
-    /*! Gets the current exponential factor used in compression.
+        @param power The new exponential power to use */
+        void setPower(const double power) { _expPower = power; }
 
-    @return The exponential factor used in compression */
-    double getExpPower() const { return _expPower; }
+        /*! Sets the pressure cap.
 
-    /*! The required operator()(int) common to all PenaltyFuncs.
+        @param cap The new pressure cap to use */
+        void setPressureCap(const double cap) { _pressureCap = cap; }
 
-    In Compression annealing, the return value varies over iterations.
-    For many other types, this will simply return a constant value. */
-    ReturnType operator()(const int iter) const
-    {
-        return _pressureCap * (1 - exp(-1 * _expPower * iter));
-    }
+        /*! Sets the percentage of cap to use.
 
-protected:
-    double _expPower;
-    double _pressureCap;
-    double _capPercentage;
-};
+        @param perc The percentage of cap to use. */
+        void setCapPercentage(const double perc) { _capPercentage = perc; }
 
-//! A class representing classical simulated annealing.
-/*! @warning This class has not been tested.  Please do not rely on its correct
-   operation.
-    @author Hansen, Thiede
-    @since 2.1
-*/
-class Simulated {
-public:
-    /*! Like Compression annealing, simulated annealing uses doubles for its
-     * lambda. */
-    typedef double ReturnType;
-    constexpr static double defaultReturnTypeValue = 0.0;
+        /*! Gets the cap percentage.
 
-    /*! A convenience constructor which initializes the multiplier to 1.0. */
-    Simulated()
-        : _mult(1.0)
-    {
-    }
+        @return The cap percentage */
+        [[nodiscard]] double getCapPercentage() const { return _capPercentage; }
 
-    /*! A constructor that sets the multiplier for use in simulated annealing.
+        /*! Gets the current exponential factor used in compression.
 
-    @param multiplier The multiplier to use */
-    Simulated(const double multiplier)
-        : _mult(multiplier)
-    {
-    }
+        @return The exponential factor used in compression */
+        [[nodiscard]] double getExpPower() const { return _expPower; }
 
-    /*! This copy constructor should be unnecessary.  It's included in the event
-    end-users feel like getting funky.
+        /*! The required operator()(int) common to all PenaltyFuncs.
 
-    @param sim The Simulated object to be copied
+        In Compression annealing, the return value varies over iterations.
+        For many other types, this will simply return a constant value. */
+        ReturnType operator()(const int iter) const {
+            return _pressureCap * (1 - exp(-1 * _expPower * iter));
+        }
+
+    protected:
+        double _expPower;
+        double _pressureCap;
+        double _capPercentage;
+    };
+
+    //! A class representing classical simulated annealing.
+    /*! @warning This class has not been tested.  Please do not rely on its correct
+       operation.
+        @author Hansen, Thiede
+        @since 2.1
     */
-    Simulated(const Simulated& sim)
-        : _mult(sim._mult)
-    {
-    }
+    class Simulated {
+    public:
+        /*! Like Compression annealing, simulated annealing uses doubles for its
+         * lambda. */
+        typedef double ReturnType;
+        constexpr static double defaultReturnTypeValue = 0.0;
 
-    /*! A no-op destructor.
+        /*! A convenience constructor which initializes the multiplier to 1.0. */
+        Simulated()
+            : _mult(1.0) {
+        }
 
-    This destructor has been virtualized in case end-users wish to subclass. */
-    virtual ~Simulated() { }
+        /*! A constructor that sets the multiplier for use in simulated annealing.
 
-    /*! Sets the multiplier for use in simulated annealing.
+        @param multiplier The multiplier to use */
+        explicit Simulated(const double multiplier)
+            : _mult(multiplier) {
+        }
 
-    @param multiplier The multiplier to use */
-    void setMultiplier(const double multiplier) { _mult = multiplier; }
+        /*! This copy constructor should be unnecessary.  It's included in the event
+        end-users feel like getting funky.
 
-    /*! All PenaltyFuncs must implement operator()(const int iter).
+        @param sim The Simulated object to be copied
+        */
+        Simulated(const Simulated &sim) = default;
 
-    However, for simulated annealing a constant value is always returned.
+        /*! A no-op destructor.
 
-    */
-    ReturnType operator()(const int) const { return _mult; }
+        This destructor has been virtualized in case end-users wish to subclass. */
+        virtual ~Simulated() = default;
 
-protected:
-    double _mult;
-};
+        /*! Sets the multiplier for use in simulated annealing.
+
+        @param multiplier The multiplier to use */
+        void setMultiplier(const double multiplier) { _mult = multiplier; }
+
+        /*! All PenaltyFuncs must implement operator()(const int iter).
+
+        However, for simulated annealing a constant value is always returned.
+
+        */
+        ReturnType operator()(const int) const { return _mult; }
+
+    protected:
+        double _mult;
+    };
+}
+
 
 #endif

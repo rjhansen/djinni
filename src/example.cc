@@ -16,12 +16,17 @@
  * PERFORMANCE OF THIS SOFTWARE. */
 
 #include "djinni.h"
+#include <iostream>
 #include <filesystem>
 
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::filesystem::exists;
+using edu::uiowa::tippie::djinni::TravelingSalesmanWorld;
+using edu::uiowa::tippie::djinni::TravelingSalesmanSolution;
+using edu::uiowa::tippie::djinni::Compression;
+using edu::uiowa::tippie::djinni::Annealer;
 
 int main() {
   const char *filename{"Dumas-1.set"};
