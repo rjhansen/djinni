@@ -16,32 +16,32 @@
  * PERFORMANCE OF THIS SOFTWARE. */
 
 #include "djinni.h"
+#include <filesystem>
 
 using std::cout;
+using std::cerr;
 using std::endl;
+using std::filesystem::exists;
 
 int main() {
+    const char* filename { "Dumas-1.set" };
+    if (! exists(filename)) {
+        cerr << "Error: couldn't find the file '" << filename << "'." << endl;
+        return 1;
+    }
   // We start by defining a world:
-  auto filename = 
-#ifdef _WIN32
-"C:/Users/rjh/source/repos/"
-#else
-"/home/rjh/Projects/"
-#endif
-"djinni/src/Dumas-1.set";
-
   auto world = TravelingSalesmanWorld::loadFromDumasFile(filename);
 
-  // And now we define what valid solutions look like -- in this
-  // case, as Traveling Salesman routes through that world:
-  auto solution = TravelingSalesmanSolution(world);
+  // And now we define our initial (bad) guess at a solution to this
+  // world:
+  auto initial_solution = TravelingSalesmanSolution(world);
 
   // Next, our annealer's penalty function is given by the
   // Ohlmann-Thomas compression function:
   auto penalty_function = Compression(0.06, 0.0, 0.9999);
 
   // And we're finally ready to rock and roll.
-  Annealer annealer(penalty_function, solution, 0.95, 0.94, 75, 100, 30000);
+  auto annealer = Annealer(penalty_function, initial_solution, 0.95, 0.94, 75, 100, 30000);
   annealer.solve();
   cout << annealer << endl;
 
