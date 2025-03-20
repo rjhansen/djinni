@@ -36,13 +36,15 @@ To use Djinni in your own code:
   (/EHsc on Microsoft's)
 * tell your compiler to optimize the code for performance
   (/O2 on Microsoft's)
+* tell your compiler to use the C++23 standard (/std:c++latest on
+  Microsoft's)
 * tell your compiler what to call the output (/Fe on Microsoft's)
 * add an '#include <djinni.h>' to your C++ sources
 
 For instance, to compile src/example.cc with Microsoft's compiler,
 you could do it from the command line with:
 
-* cl.exe /EHsc /IC:\djinni /O2 /Fedjinni_example.exe src/example.cc
+* cl.exe /EHsc /IC:\djinni /std:c++latest /O2 /Fedjinni_example.exe src/example.cc
 
 ... and you're off to the races.  You can also type '.\djinni_example.exe'
 in this directory to see it in action, study the file 'Dumas-1.set' to
@@ -89,15 +91,16 @@ To use Djinni in your own code:
   (-I${install_path}/include works for most compilers)
 * tell your compiler to optimize the code for performance
   (-O2 works for most)
+* tell your compiler to use the C++23 standard (-std=c++23 on most)
 * tell your compiler what to call the output (-o on most)
 * add an '#include <djinni.h>' to your C++ sources
 
 For instance, to compile src/example.cc with your choice of the
 Intel icpx, LLVM clang++, or GNU C++ compilers, you could enter:
 
-* icpx src/example.cc -I${install_path}/include -O2 -o djinni_example
-* clang++ src/example.cc -I${install_path}/include -O2 -o djinni_example
-* g++ src/example.cc -I${install_path}/include -O2 -o djinni_example
+* icpx src/example.cc -std=c++23 -I${install_path}/include -O2 -o djinni_example
+* clang++ src/example.cc -std=c++23 -I${install_path}/include -O2 -o djinni_example
+* g++ src/example.cc -std=c++23 -I${install_path}/include -O2 -o djinni_example
 
 ... and you're off to the races.  You can also type './djinni_example'
 in this directory to see it in action, study the file 'Dumas-1.set' to
