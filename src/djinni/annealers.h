@@ -1,5 +1,6 @@
 /* Copyright (c) 2004 - 2025, Robert J. Hansen <rjh@sixdemonbag.org>
  * and Tristan D. Thiede (address currently unknown).
+ *
  * Permission to use, copy, modify, and/or distribute this software
  * for any purpose with or without fee is hereby granted, provided
  * that the above copyright notice and this permission notice appear
@@ -349,7 +350,9 @@ protected:
 };
 
 //! An Annealer specialized for Ohlmann-Thomas compressed annealing.
-/*! For details on Ohlmann-Thomas annealing, please see [FIXME REFERENCE].
+/*! For details on Ohlmann-Thomas annealing, please see:
+ *
+ * https://myweb.uiowa.edu/bthoa/DownloadItems/TSPTWpaper4-05-05.pdf
 
     @author Hansen, Thiede
     @since 2.1
