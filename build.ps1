@@ -9,13 +9,13 @@ if ($IsWindows) {
     cmake -S .. -B . -G "Visual Studio 17 2022"
     MsBuild.exe djinni.sln /t:djinni_example /p:Platform="x64" /p:Configuration=Release
     Copy-Item src\Release\$output_file -Destination ..\$output_file
+    Copy-Item ..\src\Dumas-1.set -Destination ..\Dumas-1.set 
     Set-Location -Path ..
     Remove-Item -Recurse -Force build
     New-Item -ItemType Directory -Path djinni
     Copy-Item src\djinni.h -Destination djinni\djinni.h
     Copy-Item src\djinni -Destination djinni -Recurse
     Compress-Archive -Path djinni -CompressionLevel Optimal -DestinationPath djinni.zip
-    Copy-Item "src\Dumas-1.set" -Destination "..\Dumas-1.set"
     Remove-Item -Recurse -Force djinni
     Write-Host @"
 * * * * * * * * * *
