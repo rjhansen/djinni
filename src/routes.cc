@@ -1,7 +1,24 @@
-#include "routes.h"
+/* Copyright (c) 2004 - 2025, Robert J. Hansen <rjh@sixdemonbag.org>
+ * and Tristan D. Thiede (address currently unknown).
+ * Permission to use, copy, modify, and/or distribute this software
+ * for any purpose with or without fee is hereby granted, provided
+ * that the above copyright notice and this permission notice appear
+ * in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
+ * OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE. */
+
+#include "djinni/routes.h"
 #include <fstream>
 #include <iostream>
-#include <sstream>
+#include <iterator>
+#include <regex>
 
 using std::back_inserter;
 using std::cerr;
@@ -11,72 +28,53 @@ using std::endl;
 using std::getline;
 using std::ifstream;
 using std::istream;
+using std::istreambuf_iterator;
 using std::ostream;
+using std::regex;
+using std::smatch;
+using std::stod;
+using std::stoi;
 using std::string;
 using std::stringstream;
 using std::vector;
 
 namespace {
-void consume_lines(istream &is, int lines) {
-  string discard;
-  while (lines--)
-    getline(is, discard);
-}
-
-void loadDumas(istream &is, TSPTWWorld &tsp) {
-  string line;
-
-  consume_lines(is, 5);
-  while (is) {
-    vector<double> row{0, 0, 0, 0, 0, 0};
-    int discard;
-    stringstream ss;
-    getline(is, line);
-    ss << line;
-    ss >> discard;
-    if (999 == discard)
-      break;
-    ss >> row[0] >> row[1] >> row[2] >> row[3] >> row[4] >> row[5];
-    tsp.data().push_back(Matrix<double, 1>(row));
-  }
-}
+regex drx("^\\s*(\\d+)"
+          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+          "\\s*$");
 } // namespace
 
-TSPTWWorld::TSPTWWorld(const char *filename) {
+TravelingSalesmanWorld::TravelingSalesmanWorld() {}
+
+TravelingSalesmanWorld
+TravelingSalesmanWorld::loadFromDumasFile(string filename) {
   ifstream in(filename);
-  string line;
-
-  data().reset();
-
-  getline(in, line);
-  getline(in, line);
-  getline(in, line);
-  if (line.substr(0, 2) == "!!") {
-    loadDumas(in, *this);
-    computeTravelTimes();
-  }
+  string str(istreambuf_iterator<char>{in}, istreambuf_iterator<char>{});
+  return loadFromDumasString(str);
 }
 
-TSPTWWorld::TSPTWWorld(const std::string &filename) {
-  ifstream in(filename.c_str());
-  string line;
-
-  data().reset();
-
-  getline(in, line);
-  getline(in, line);
-  getline(in, line);
-  if (line.substr(0, 2) == "!!") {
-    loadDumas(in, *this);
-    computeTravelTimes();
+TravelingSalesmanWorld
+TravelingSalesmanWorld::loadFromDumasString(string dumasStr) {
+  TravelingSalesmanWorld tsp;
+  smatch match;
+  size_t pos = 0;
+  while ((pos = dumasStr.find("\n")) != string::npos) {
+    string line = dumasStr.substr(0, pos);
+    if (std::regex_match(line, match, drx)) {
+      if (999 == stoi(match[1].str()))
+        break;
+      vector<double> row(6);
+      for (uint32_t i = 0; i < 6; i += 1)
+        row[i] = stod(match[i + 2].str());
+      tsp.data().push_back(Matrix<double, 1>(row));
+    }
+    dumasStr.erase(0, pos + 1);
   }
-}
-
-ostream &operator<<(ostream &os, const TSPTWWorld &w) {
-  for (unsigned int i = 0; i < w.data().size(); i++) {
-    for (unsigned j = 0; j < w.data()[i].size(); j++)
-      os << w.data()[i][j] << "\t";
-    os << "\n";
-  }
-  return os;
+  tsp.computeTravelTimes();
+  return tsp;
 }

@@ -14,6 +14,19 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE. */
 
-#include "djinni/annealers.h"
-#include "djinni/penalties.h"
-#include "djinni/routes.h"
+#include "utils.h"
+#include <random>
+
+//! The Mersenne Twister.
+/** This is a fairly good pseudorandom number generator for Monte
+    Carlo simulations, but lousy for other purposes (including
+    cryptographic ones).*/
+
+namespace {
+std::uniform_real_distribution<> dis(0.0, 1.0);
+}
+
+std::random_device rd;
+std::mt19937 prng(rd());
+
+double randomReal() { return dis(prng); }
