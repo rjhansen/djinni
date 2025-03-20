@@ -8,3 +8,4 @@ MsBuild.exe djinni.sln /t:djinni_example /p:Platform="x64" /p:Configuration=Rele
 Copy-Item src\Release\djinni_example.exe -Destination ..\djinni_example.exe
 Set-Location -Path ..
 Remove-Item -Recurse -Force build
+Get-ChildItem djinni_example.exe
