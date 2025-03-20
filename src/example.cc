@@ -18,17 +18,17 @@
 #include "djinni.h"
 #include <filesystem>
 
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::filesystem::exists;
 
 int main() {
-    const char* filename { "Dumas-1.set" };
-    if (! exists(filename)) {
-        cerr << "Error: couldn't find the file '" << filename << "'." << endl;
-        return 1;
-    }
+  const char *filename{"Dumas-1.set"};
+  if (!exists(filename)) {
+    cerr << "Error: couldn't find the file '" << filename << "'." << endl;
+    return 1;
+  }
   // We start by defining a world:
   auto world = TravelingSalesmanWorld::loadFromDumasFile(filename);
 
@@ -41,7 +41,8 @@ int main() {
   auto penalty_function = Compression(0.06, 0.0, 0.9999);
 
   // And we're finally ready to rock and roll.
-  auto annealer = Annealer(penalty_function, initial_solution, 0.95, 0.94, 75, 100, 30000);
+  auto annealer =
+      Annealer(penalty_function, initial_solution, 0.95, 0.94, 75, 100, 30000);
   annealer.solve();
   cout << annealer << endl;
 

@@ -35,10 +35,19 @@ echo "Djinni has been installed to ${install_path}/include"
 echo
 echo "To use Djinni in your own code:"
 echo
-echo "* add ${install_path}/include to your compiler's include path"
-echo "  ('-I${install_path}/include' works for GNU g++, LLVM clang++, and"
-echo "  Intel icpx)"
+echo "* tell your compiler to add ${install_path/include} to your include path"
+echo "  (-I${install_path}/include works for most compilers)"
+echo "* tell your compiler to optimize the code for performance"
+echo "  (-O2 works for most)"
+echo "* tell your compiler what to call the output (-o on most)"
 echo "* add an '#include <djinni.h>' to your C++ sources"
+echo
+echo "For instance, to compile src/example.cc with your choice of the"
+echo "Intel icpx, LLVM clang++, or GNU C++ compilers, you could enter:"
+echo
+echo "* icpx src/example.cc -I${install_path}/include -O2 -o djinni_example"
+echo "* clang++ src/example.cc -I${install_path}/include -O2 -o djinni_example"
+echo "* g++ src/example.cc -I${install_path}/include -O2 -o djinni_example"
 echo
 echo "... and you're off to the races.  You can also type './djinni_example'"
 echo "in this directory to see it in action, study the file 'Dumas-1.set' to"

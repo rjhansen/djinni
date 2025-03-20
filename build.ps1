@@ -85,10 +85,19 @@ Djinni has been installed to $install_path/include
 
 To use Djinni in your own code:
 
-* add $install_path/include to your compiler's include path
-  ('-I$install_path/include' works for GNU g++, LLVM clang++, and
-  Intel icpx)
+* tell your compiler to add ${install_path/include} to your include path
+  (-I${install_path}/include works for most compilers)
+* tell your compiler to optimize the code for performance
+  (-O2 works for most)
+* tell your compiler what to call the output (-o on most)
 * add an '#include <djinni.h>' to your C++ sources
+
+For instance, to compile src/example.cc with your choice of the
+Intel icpx, LLVM clang++, or GNU C++ compilers, you could enter:
+
+* icpx src/example.cc -I${install_path}/include -O2 -o djinni_example
+* clang++ src/example.cc -I${install_path}/include -O2 -o djinni_example
+* g++ src/example.cc -I${install_path}/include -O2 -o djinni_example
 
 ... and you're off to the races.  You can also type './djinni_example'
 in this directory to see it in action, study the file 'Dumas-1.set' to

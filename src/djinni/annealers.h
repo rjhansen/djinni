@@ -25,7 +25,6 @@
 #include <memory>
 #include <random>
 #include <sstream>
-#include <stdint.h>
 #include <string>
 
 //! A generic Annealer capable of working with a variety of different problem
@@ -304,8 +303,7 @@ protected:
                 else {
                     uphill++;
                     double u = 0 - delta / _currentT;
-                    if (Annealer<PenaltyFunc,SolutionType>::dis(
-                        Annealer<PenaltyFunc,SolutionType>::prng) < exp(u)) {
+                    if (randomReal() < exp(u)) {
                         _current.swap(_neighbor);
                         acceptedWorse++;
                     }
@@ -329,8 +327,7 @@ protected:
             _current.swap(_neighbor);
         else {
             double u = 0 - delta / _currentT;
-            if (Annealer<PenaltyFunc,SolutionType>::dis(
-                Annealer<PenaltyFunc,SolutionType>::prng) < exp(u))
+            if (randomReal() < exp(u))
                 _current.swap(_neighbor);
         }
     }
@@ -349,6 +346,10 @@ protected:
     double _multiplierT, _acceptProb, _currentT;
     PenaltyFunc _pfunc;
     PenaltyType _lambda;
+    inline static std::random_device rd{};
+    inline static std::mt19937_64 prng{rd()};
+    inline static std::uniform_real_distribution<> urd{0.0, 1.0};
+    static double randomReal() { return urd(prng); }
 };
 
 //! An Annealer specialized for Ohlmann-Thomas compressed annealing.
@@ -639,8 +640,7 @@ protected:
                 else {
                     uphill++;
                     double u = 0 - delta / _currentT;
-                    double generated = Annealer<Compression, SolutionType>::dis(
-                        Annealer<Compression, SolutionType>::prng);
+                    double generated = Annealer<Compression, SolutionType>::randomReal();
                     if (generated < exp(u)) {
                         _current.swap(_neighbor);
                         acceptedWorse++;
@@ -665,8 +665,7 @@ protected:
             _current.swap(_neighbor);
         else {
             double u = 0 - delta / _currentT;
-            if (Annealer<Compression, SolutionType>::dis(
-                Annealer<Compression, SolutionType>::prng) < exp(u))
+            if (randomReal() < exp(u))
                 _current.swap(_neighbor);
         }
     }
@@ -687,7 +686,8 @@ protected:
     PenaltyType _lambda;
     inline static std::random_device rd{};
     inline static std::mt19937_64 prng{rd()};
-    inline static std::uniform_real_distribution<> dis{0.0, 1.0};
+    inline static std::uniform_real_distribution<> urd{0.0, 1.0};
+    static double randomReal() { return urd(prng); }
 };
 
 /*! An overridden operator<< which serves as a proxy for an Annealer's dump()
