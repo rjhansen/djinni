@@ -58,16 +58,20 @@ public:
     @param maxIter The maximum number of annealing iterations to apply
     */
     Annealer(PenaltyFunc &pfunc, SolutionType &sol, double multT, double accept,
-             uint32_t tBI, uint32_t minIter, uint32_t maxIter)
-        : _best(new SolutionType(sol))
-          , _current(new SolutionType(*_best))
-          , _neighbor(new SolutionType(*_best))
-          , _bestIter(0)
-          , _iterations(0)
-          , _terminalBestIter(0)
-          , _pfunc(pfunc)
-          , _lambda(PenaltyFunc::defaultReturnTypeValue) {
-        setParameters(multT, accept, tBI, minIter, maxIter);
+             uint32_t tBI, uint32_t minIter, uint32_t maxIter):
+    _best(new SolutionType(sol)),
+    _current(new SolutionType(*_best)),
+    _neighbor(new SolutionType(*_best)),
+    _bestIter(0),
+    _iterations(0),
+    _maxIterations(maxIter),
+    _minIterations(minIter),
+    _terminalBestIter(tBI),
+    _multiplierT(multT),
+    _acceptProb(accept),
+    _currentT(0),
+    _pfunc(pfunc),
+    _lambda(PenaltyFunc::defaultReturnTypeValue) {
     }
 
     /*! An Annealer constructor appropriate for use with PenaltyFuncs which have a
@@ -84,14 +88,19 @@ public:
     */
 
     Annealer(SolutionType &solution, double multT, double accept, uint32_t tBI,
-             uint32_t minIter, uint32_t maxIter)
-        : _best(new SolutionType(solution)),
-          _current(new SolutionType(*_best)),
-          _neighbor(new SolutionType(*_best)),
-          _bestIter(0),
-          _iterations(0),
-          _terminalBestIter(0) {
-        setParameters(multT, accept, tBI, minIter, maxIter);
+             uint32_t minIter, uint32_t maxIter):
+    _best(new SolutionType(solution)),
+    _current(new SolutionType(*_best)),
+    _neighbor(new SolutionType(*_best)),
+    _bestIter(0),
+    _iterations(0),
+    _maxIterations(maxIter),
+    _minIterations(minIter),
+    _terminalBestIter(tBI),
+    _multiplierT(multT),
+    _acceptProb(accept),
+    _currentT(0),
+    _lambda(PenaltyFunc::defaultReturnValueType) {
     }
 
     /*! An Annealer constructor for use when the parameters will be set after
@@ -100,19 +109,19 @@ public:
     @param pfunc The penalty function to be applied to this annealer
     @param sol A solution, populated randomly, to be applied to this annealer
     */
-    Annealer(PenaltyFunc &pfunc, SolutionType &sol)
-        : _best(new SolutionType(sol)),
-          _current(new SolutionType(*_best)),
-          _neighbor(new SolutionType(*_best)),
-          _bestIter(0),
-          _iterations(0),
-          _maxIterations(0),
-          _minIterations(0),
-          _terminalBestIter(0),
-          _multiplierT(0),
-          _acceptProb(0),
-          _currentT(0),
-          _pfunc(pfunc) {
+    Annealer(PenaltyFunc &pfunc, SolutionType &sol):
+    _best(new SolutionType(sol)),
+    _current(new SolutionType(*_best)),
+    _neighbor(new SolutionType(*_best)),
+    _bestIter(0),
+    _iterations(0),
+    _maxIterations(0),
+    _minIterations(0),
+    _terminalBestIter(0),
+    _multiplierT(0),
+    _acceptProb(0),
+    _currentT(0),
+    _pfunc(pfunc) {
     }
 
     /*! A no-op destructor.
@@ -120,8 +129,7 @@ public:
     This destructor is virtualized to allow end users to subclass off this
     template.  Whether an end user should subclass off this template is a
     different question. */
-    virtual ~Annealer() {
-    }
+    virtual ~Annealer() = default;
 
     /*! Returns this Annealer's PenaltyFunc */
     PenaltyFunc &getPenaltyFunc() { return _pfunc; }
@@ -150,10 +158,8 @@ public:
             for (uint32_t count = 0; count < _maxIterations; ++count) {
                 _current->generateNeighbor(*_neighbor);
                 testNeigh();
-                if (_current->getP() < _best->getP()) {
-                    (*_best) = (*_current);
-                    _bestIter = 1;
-                } else if (_current->getP() == _best->getP() && _current->getF() < _best->getF()) {
+                if ((_current->getP() < _best->getP()) ||
+                    (_current->getP() == _best->getP() && _current->getF() < _best->getF())) {
                     (*_best) = (*_current);
                     _bestIter = 1;
                 }
@@ -168,7 +174,7 @@ public:
 
     @return A std::string representation of the best solution found by the
     annealer. */
-    std::string solution() const {
+    [[nodiscard]] std::string solution() const {
         std::stringstream ss;
         ss << (*_best);
         std::string result = ss.str();
@@ -229,42 +235,42 @@ public:
     /*! Returns the cost of the best solution found by the annealer.
 
     @return The cost of the best solution found by the annealer.*/
-    double cost() const { return _best->getF(); }
+    [[nodiscard]] double cost() const { return _best->getF(); }
 
     /*! Returns the penalty incurred by the best solution found by the annealer.
 
     @return The penalty incurred by the best solution found by the annealer. */
-    double penalty() const { return _best->getP(); }
+    [[nodiscard]] double penalty() const { return _best->getP(); }
     /*! Returns the number of the iteration on which the best solution was
     encountered.
 
     @return The number of the iteration on which the best solution was
     encountered. */
-    uint32_t bestIter() const { return _bestIter; }
+    [[nodiscard]] uint32_t bestIter() const { return _bestIter; }
 
     /*! Returns the current iteration number.
 
     @return The current iteration number. */
-    uint32_t iterations() const { return _iterations; }
+    [[nodiscard]] uint32_t iterations() const { return _iterations; }
 
     /*! Returns the maximum number of annealer iterations to run.
 
     @return The maximum number of annealer iterations to run. */
-    uint32_t maxIterations() const { return _maxIterations; }
+    [[nodiscard]] uint32_t maxIterations() const { return _maxIterations; }
 
     /*! Returns the minimum number of annealer iterations to run.
 
     @return The minimum number of annealer iterations to run. */
-    uint32_t minIterations() const { return _minIterations; }
+    [[nodiscard]] uint32_t minIterations() const { return _minIterations; }
     /*! Returns the temperature multiplier.
 
     @return The temperature multiplier. */
-    double multiplier() const { return _multiplierT; }
+    [[nodiscard]] double multiplier() const { return _multiplierT; }
 
     /*! Returns the probability of accepting an inferior move.
 
     @return The probability of accepting an inferior move. */
-    double probability() const { return _acceptProb; }
+    [[nodiscard]] double probability() const { return _acceptProb; }
     /*! Returns the current lambda.
 
     @return The current lambda. */
@@ -308,9 +314,8 @@ protected:
                         acceptedWorse++;
                     }
                 }
-                if (_current->getP() < _best->getP())
-                    *_best = *_current;
-                else if ((_current->getP() == _best->getP()) && (_current->getF() < _best->getF()))
+                if ((_current->getP() < _best->getP()) ||
+                ((_current->getP() == _best->getP()) && (_current->getF() < _best->getF())))
                     *_best = *_current;
             }
             if ((static_cast<double>(acceptedWorse) / static_cast<double>(uphill)) < _acceptProb)
@@ -340,10 +345,10 @@ protected:
 
     std::shared_ptr<SolutionType> _best, _current, _neighbor;
 
-    uint32_t _bestIter, _iterations, _maxIterations, _minIterations,
+    uint32_t _bestIter, _iterations, _maxIterations{}, _minIterations{},
             _terminalBestIter;
     static constexpr int _sampleSize = 10000;
-    double _multiplierT, _acceptProb, _currentT;
+    double _multiplierT{}, _acceptProb{}, _currentT{};
     PenaltyFunc _pfunc;
     PenaltyType _lambda;
     inline static std::random_device rd{};
@@ -381,16 +386,20 @@ public:
     @param maxIter The maximum number of annealing iterations to apply
     */
     Annealer(const PenaltyFunc &pfunc, SolutionType &sol, double multT, double accept,
-             uint32_t tBI, uint32_t minIter, uint32_t maxIter)
-        : _best(new SolutionType(sol))
-          , _current(new SolutionType(*_best))
-          , _neighbor(new SolutionType(*_best))
-          , _bestIter(0)
-          , _iterations(0)
-          , _terminalBestIter(0)
-          , _pfunc(pfunc)
-          , _lambda(PenaltyFunc::defaultReturnTypeValue) {
-        setParameters(multT, accept, tBI, minIter, maxIter);
+             uint32_t tBI, uint32_t minIter, uint32_t maxIter):
+    _best(new SolutionType(sol)),
+    _current(new SolutionType(*_best)),
+    _neighbor(new SolutionType(*_best)),
+    _bestIter(0),
+    _iterations(0),
+    _maxIterations(maxIter),
+    _minIterations(minIter),
+    _terminalBestIter(tBI),
+    _multiplierT(multT),
+    _acceptProb(accept),
+    _currentT(0),
+    _pfunc(pfunc),
+    _lambda(0) {
     }
 
     /*! An Annealer constructor appropriate for use with PenaltyFuncs which have a
@@ -407,14 +416,19 @@ public:
     */
 
     Annealer(SolutionType &solution, double multT, double accept, uint32_t tBI,
-             uint32_t minIter, uint32_t maxIter)
-        : _best(new SolutionType(solution))
-          , _current(new SolutionType(*_best))
-          , _neighbor(new SolutionType(*_best))
-          , _bestIter(0)
-          , _iterations(0)
-          , _terminalBestIter(0) {
-        setParameters(multT, accept, tBI, minIter, maxIter);
+             uint32_t minIter, uint32_t maxIter):
+    _best(new SolutionType(solution)),
+    _current(new SolutionType(*_best)),
+    _neighbor(new SolutionType(*_best)),
+    _bestIter(0),
+    _iterations(0),
+    _maxIterations(maxIter),
+    _minIterations(minIter),
+    _terminalBestIter(tBI),
+    _multiplierT(multT),
+    _acceptProb(accept),
+    _currentT(0),
+    _lambda(0) {
     }
 
     /*! An Annealer constructor for use when the parameters will be set after
@@ -423,20 +437,20 @@ public:
     @param pfunc The penalty function to be applied to this annealer
     @param sol A solution, populated randomly, to be applied to this annealer
     */
-    Annealer(const PenaltyFunc &pfunc, SolutionType &sol)
-        : _best(new SolutionType(sol)),
-          _current(new SolutionType(*_best)),
-          _neighbor(new SolutionType(*_best)),
-          _bestIter(0),
-          _iterations(0),
-          _maxIterations(0),
-          _minIterations(0),
-          _terminalBestIter(0),
-          _multiplierT(0),
-          _acceptProb(0),
-          _currentT(0),
-          _pfunc(pfunc),
-          _lambda(0) {
+    Annealer(const PenaltyFunc &pfunc, SolutionType &sol):
+    _best(new SolutionType(sol)),
+    _current(new SolutionType(*_best)),
+    _neighbor(new SolutionType(*_best)),
+    _bestIter(0),
+    _iterations(0),
+    _maxIterations(0),
+    _minIterations(0),
+    _terminalBestIter(0),
+    _multiplierT(0),
+    _acceptProb(0),
+    _currentT(0),
+    _pfunc(pfunc),
+    _lambda(0) {
     }
 
     /*! A no-op destructor.
@@ -444,8 +458,7 @@ public:
     This destructor is virtualized to allow end users to subclass off this
     template.  Whether an end user should subclass off this template is a
     different question. */
-    virtual ~Annealer() {
-    }
+    virtual ~Annealer() = default;
 
     /*! Returns this Annealer's PenaltyFunc */
     PenaltyFunc &getPenaltyFunc() { return _pfunc; }
@@ -474,10 +487,8 @@ public:
             for (uint32_t count = 0; count < _maxIterations; ++count) {
                 _current->generateNeighbor(*_neighbor);
                 testNeigh();
-                if (_current->getP() < _best->getP()) {
-                    (*_best) = (*_current);
-                    _bestIter = 1;
-                } else if (_current->getP() == _best->getP() && _current->getF() < _best->getF()) {
+                if ((_current->getP() < _best->getP()) ||
+                    (_current->getP() == _best->getP() && _current->getF() < _best->getF())) {
                     (*_best) = (*_current);
                     _bestIter = 1;
                 }
@@ -492,7 +503,7 @@ public:
 
     @return A std::string representation of the best solution found by the
     annealer. */
-    std::string solution() const {
+    [[nodiscard]] std::string solution() const {
         std::stringstream ss;
         ss << (*_best);
         std::string result = ss.str();
@@ -553,46 +564,46 @@ public:
     /*! Returns the cost of the best solution found by the annealer.
 
     @return The cost of the best solution found by the annealer.*/
-    double cost() const { return _best->getF(); }
+    [[nodiscard]] double cost() const { return _best->getF(); }
 
     /*! Returns the penalty incurred by the best solution found by the annealer.
 
     @return The penalty incurred by the best solution found by the annealer. */
-    double penalty() const { return _best->getP(); }
+    [[nodiscard]] double penalty() const { return _best->getP(); }
     /*! Returns the number of the iteration on which the best solution was
     encountered.
 
     @return The number of the iteration on which the best solution was
     encountered. */
-    uint32_t bestIter() const { return _bestIter; }
+    [[nodiscard]] uint32_t bestIter() const { return _bestIter; }
 
     /*! Returns the current iteration number.
 
     @return The current iteration number. */
-    uint32_t iterations() const { return _iterations; }
+    [[nodiscard]] uint32_t iterations() const { return _iterations; }
 
     /*! Returns the maximum number of annealer iterations to run.
 
     @return The maximum number of annealer iterations to run. */
-    uint32_t maxIterations() const { return _maxIterations; }
+    [[nodiscard]] uint32_t maxIterations() const { return _maxIterations; }
 
     /*! Returns the minimum number of annealer iterations to run.
 
     @return The minimum number of annealer iterations to run. */
-    uint32_t minIterations() const { return _minIterations; }
+    [[nodiscard]] uint32_t minIterations() const { return _minIterations; }
     /*! Returns the temperature multiplier.
 
     @return The temperature multiplier. */
-    double multiplier() const { return _multiplierT; }
+    [[nodiscard]] double multiplier() const { return _multiplierT; }
 
     /*! Returns the probability of accepting an inferior move.
 
     @return The probability of accepting an inferior move. */
-    double probability() const { return _acceptProb; }
+    [[nodiscard]] double probability() const { return _acceptProb; }
     /*! Returns the current lambda.
 
     @return The current lambda. */
-    PenaltyType getLambda() const { return _lambda; }
+    [[nodiscard]] PenaltyType getLambda() const { return _lambda; }
 
 protected:
     /*! Performs housekeeping to make sure our parameters are properly set before
@@ -646,9 +657,8 @@ protected:
                         acceptedWorse++;
                     }
                 }
-                if (_current->getP() < _best->getP())
-                    *_best = *_current;
-                else if ((_current->getP() == _best->getP()) && (_current->getF() < _best->getF()))
+                if ((_current->getP() < _best->getP()) ||
+                ((_current->getP() == _best->getP()) && (_current->getF() < _best->getF())))
                     *_best = *_current;
             }
             if ((static_cast<double>(acceptedWorse) / static_cast<double>(uphill)) < _acceptProb)
