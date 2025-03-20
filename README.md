@@ -1,4 +1,14 @@
 # Djinni
+
+| **Compiler** | **Version** | **Platform**  | **Works?** |
+|:-------------|:-----------:|:-------------:|:----------:|
+| Intel C++    |   2025.4    |    x86_64     |    Yes     |
+| GNU C++      |     14      |    x86_64     |    Yes     |
+| GNU C++      |     14      | Apple Silicon |    Yes     |
+| Clang C++    |     16      | Apple Silicon |    Yes     |
+| Clang C++    |     19      |    x86_64     |    Yes     |
+| Visual C++   |    2022     |    x86_64     |    Yes     |
+
 In the mid-2000s a pair of operations research professors at the
 University of Iowa came to me with a problem: they’d written a
 [fine paper](https://myweb.uiowa.edu/bthoa/DownloadItems/TSPTWpaper4-05-05.pdf)
@@ -11,6 +21,17 @@ For Djinni’s twentieth anniversary I decided to dust off the old
 code and refactor it somewhat to bring it up to the C++23 standard.
 The code held up surprisingly well.
 
+## Is it still relevant?
+Sure, if you need a high-performance annealing library. The codebase
+is old but recently overhauled. It has some real virtues, too:
+
+* **It’s crossplatform.** Since the codebase is pure C++23, if you
+  have a standards-conforming compiler you're good to go.
+* **It’s lightweight.** It’s memory footprint is tiny, making it a
+  good choice for constrained environments.
+* **It’s dependency-free.** No third-party libraries, no compiler
+  vendor extensions.
+
 The original Djinni README follows:
 
 ## `README`
@@ -18,20 +39,20 @@ The original Djinni README follows:
 The goal of Djinni is to provide a library for constrained
 combinatorial optimization which is:
 
-    * Understandable.  The entire workings of Djinni should be
-      comprehensible to a Management Sciences undergraduate
-      who has a little talent for programming.
+* Understandable.  The entire workings of Djinni should be
+  comprehensible to a Management Sciences undergraduate
+  who has a little talent for programming.
 
-    * Comprehensive.  Tabu search, annealing, genetic algorithms,
-      hybrid systems, bounded approximation algorithms and more
-      should all be provided.
+* Comprehensive.  Tabu search, annealing, genetic algorithms, 
+  hybrid systems, bounded approximation algorithms and more 
+  should all be provided.
 
-    * Efficient.  Djinni's core should strive for efficiency and
-      speed.  However, there will be no trade-off with the
-      understandability of the code.  Any compromise between code
-      efficiency and code clarity is based on a false dichotomy:
-      we will have clarity with efficiency or we will have neither
-      at all.
+* Efficient.  Djinni's core should strive for efficiency and
+  speed.  However, there will be no trade-off with the
+  understandability of the code.  Any compromise between code
+  efficiency and code clarity is based on a false dichotomy:
+  we will have clarity with efficiency or we will have neither
+  at all.
 
 At present we are meeting all of our goals save for the second.
 
