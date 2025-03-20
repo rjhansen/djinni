@@ -19,11 +19,11 @@
 #define ANNEALERS_H
 
 #include "penalties.h"
-#include "utils.h"
 #include <cmath>
 #include <cstdint>
 #include <iosfwd>
 #include <memory>
+#include <random>
 #include <sstream>
 #include <stdint.h>
 #include <string>
@@ -304,7 +304,8 @@ protected:
                 else {
                     uphill++;
                     double u = 0 - delta / _currentT;
-                    if (randomReal() < exp(u)) {
+                    if (Annealer<PenaltyFunc,SolutionType>::dis(
+                        Annealer<PenaltyFunc,SolutionType>::prng) < exp(u)) {
                         _current.swap(_neighbor);
                         acceptedWorse++;
                     }
@@ -328,7 +329,8 @@ protected:
             _current.swap(_neighbor);
         else {
             double u = 0 - delta / _currentT;
-            if (randomReal() < exp(u))
+            if (Annealer<PenaltyFunc,SolutionType>::dis(
+                Annealer<PenaltyFunc,SolutionType>::prng) < exp(u))
                 _current.swap(_neighbor);
         }
     }
@@ -637,7 +639,8 @@ protected:
                 else {
                     uphill++;
                     double u = 0 - delta / _currentT;
-                    double generated = randomReal();
+                    double generated = Annealer<Compression, SolutionType>::dis(
+                        Annealer<Compression, SolutionType>::prng);
                     if (generated < exp(u)) {
                         _current.swap(_neighbor);
                         acceptedWorse++;
@@ -662,7 +665,8 @@ protected:
             _current.swap(_neighbor);
         else {
             double u = 0 - delta / _currentT;
-            if (randomReal() < exp(u))
+            if (Annealer<Compression, SolutionType>::dis(
+                Annealer<Compression, SolutionType>::prng) < exp(u))
                 _current.swap(_neighbor);
         }
     }
@@ -681,6 +685,9 @@ protected:
     double _multiplierT, _acceptProb, _currentT;
     PenaltyFunc _pfunc;
     PenaltyType _lambda;
+    inline static std::random_device rd{};
+    inline static std::mt19937_64 prng{rd()};
+    inline static std::uniform_real_distribution<> dis{0.0, 1.0};
 };
 
 /*! An overridden operator<< which serves as a proxy for an Annealer's dump()

@@ -40,42 +40,4 @@ using std::stringstream;
 using std::vector;
 
 namespace {
-regex drx("^\\s*(\\d+)"
-          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
-          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
-          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
-          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
-          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
-          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
-          "\\s*$");
-} // namespace
-
-TravelingSalesmanWorld::TravelingSalesmanWorld() {}
-
-TravelingSalesmanWorld
-TravelingSalesmanWorld::loadFromDumasFile(string filename) {
-  ifstream in(filename);
-  string str(istreambuf_iterator<char>{in}, istreambuf_iterator<char>{});
-  return loadFromDumasString(str);
-}
-
-TravelingSalesmanWorld
-TravelingSalesmanWorld::loadFromDumasString(string dumasStr) {
-  TravelingSalesmanWorld tsp;
-  smatch match;
-  size_t pos = 0;
-  while ((pos = dumasStr.find("\n")) != string::npos) {
-    string line = dumasStr.substr(0, pos);
-    if (std::regex_match(line, match, drx)) {
-      if (999 == stoi(match[1].str()))
-        break;
-      vector<double> row(6);
-      for (uint32_t i = 0; i < 6; i += 1)
-        row[i] = stod(match[i + 2].str());
-      tsp.data().push_back(Matrix<double, 1>(row));
-    }
-    dumasStr.erase(0, pos + 1);
-  }
-  tsp.computeTravelTimes();
-  return tsp;
-}
+ // namespace

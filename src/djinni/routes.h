@@ -22,10 +22,12 @@
 #include "utils.h"
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <memory>
-#include <stdint.h>
+#include <regex>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -128,11 +130,41 @@ protected:
 */
 class TravelingSalesmanWorld {
 public:
-    TravelingSalesmanWorld();
+  TravelingSalesmanWorld() {}
 
-    static TravelingSalesmanWorld loadFromDumasFile(std::string filename);
+    static TravelingSalesmanWorld loadFromDumasFile(std::string filename) {
+    std::ifstream in(filename);
+    std::string str(std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{});
+    return loadFromDumasString(str);
+  };
 
-    static TravelingSalesmanWorld loadFromDumasString(std::string dumasStr);
+    static TravelingSalesmanWorld loadFromDumasString(std::string dumasStr) {
+    TravelingSalesmanWorld tsp;
+    std::smatch match;
+    size_t pos = 0;
+    static std::regex drx("^\\s*(\\d+)"
+                          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+                          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+                          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+                          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+                          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+                          "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
+                          "\\s*$");
+    while ((pos = dumasStr.find("\n")) != std::string::npos) {
+      std::string line = dumasStr.substr(0, pos);
+      if (std::regex_match(line, match, drx)) {
+        if (999 == std::stoi(match[1].str()))
+          break;
+        std::vector<double> row(6);
+        for (uint32_t i = 0; i < 6; i += 1)
+          row[i] = std::stod(match[i + 2].str());
+        tsp.data().push_back(Matrix<double, 1>(row));
+      }
+      dumasStr.erase(0, pos + 1);
+    }
+    tsp.computeTravelTimes();
+    return tsp;
+  };
 
     virtual ~TravelingSalesmanWorld() {
     }
@@ -159,18 +191,18 @@ protected:
     virtual void computeTravelTimes() {
         uint32_t numCustomers = _matrix.size();
         _timeMatrix.resize(numCustomers);
-        for (uint32_t i = 0; i <= numCustomers - 1; i++) {
+        for (uint32_t i = 0; i < numCustomers ; i++) {
             _timeMatrix[i].resize(numCustomers);
-            for (uint32_t j = 0; j <= numCustomers - 1; j++) {
+            for (uint32_t j = 0; j < numCustomers ; j++) {
                 _timeMatrix[i][j] = ::sqrt(
                     (_matrix[i][0] - _matrix[j][0]) * (_matrix[i][0] - _matrix[j][0]) + (_matrix[i][1] - _matrix[j][1])
                     * (_matrix[i][1] - _matrix[j][1]));
                 _timeMatrix[i][j] = ::floor(_timeMatrix[i][j]);
             }
         }
-        for (uint32_t i = 0; i <= numCustomers - 1; i++)
-            for (uint32_t j = 0; j <= numCustomers - 1; j++)
-                for (uint32_t k = 0; k <= numCustomers - 1; k++)
+        for (uint32_t i = 0; i < numCustomers ; i++)
+            for (uint32_t j = 0; j < numCustomers ; j++)
+                for (uint32_t k = 0; k < numCustomers ; k++)
                     if (_timeMatrix[i][j] > (_timeMatrix[i][k] + _timeMatrix[k][j]))
                         _timeMatrix[i][j] = _timeMatrix[i][k] + _timeMatrix[k][j];
         _lowdeadlines.resize(numCustomers);
@@ -186,8 +218,6 @@ protected:
         }
     }
 };
-
-std::ostream &operator<<(std::ostream &os, const TravelingSalesmanWorld &w);
 
 //! A representation of information needed for the Traveling Salesman Problem.
 /*! While many different WorldTypes can be used with TravelingSalesmanSolution, it has been most
@@ -270,10 +300,12 @@ public:
         neighbor.setF(getF());
         neighbor.setP(getP());
         while (0 == firstswitch)
-            firstswitch = static_cast<int>((numCustomers - 1) * randomReal()) + 1;
+            firstswitch = static_cast<int>((numCustomers - 1) * 
+            TravelingSalesmanSolution::dis(TravelingSalesmanSolution::prng)) + 1;
         uint32_t secondswitch = firstswitch;
         while ((secondswitch == firstswitch) || (secondswitch == firstswitch - 1))
-            secondswitch = static_cast<int>((numCustomers - 1) * randomReal()) + 1;
+            secondswitch = static_cast<int>((numCustomers - 1) * 
+            TravelingSalesmanSolution::dis(TravelingSalesmanSolution::prng)) + 1;
         int holder = _solution[firstswitch];
         if (firstswitch < secondswitch) {
             std::copy(_solution.begin(), _solution.begin() + firstswitch,
@@ -356,7 +388,7 @@ public:
             _solution[i] = static_cast<int>(i);
         std::vector<int>::iterator iter = _solution.begin();
         ++iter;
-        std::shuffle(iter, _solution.end(), prng);
+        std::shuffle(iter, _solution.end(), TravelingSalesmanSolution::prng);
     }
 
     /*! Copy constructor.
@@ -460,6 +492,9 @@ protected:
     std::vector<double> _penaltysum;
     double _time, _cost, _timeWait;
     uint32_t _firstswitch, _secondswitch, _firstarrival, _firstpenalty;
+    inline static std::random_device rd{};
+    inline static std::mt19937_64 prng{rd()};
+    inline static std::uniform_real_distribution<> dis{0.0, 1.0};
 };
 
 /*! An operator<< overloaded for TravelingSalesmanSolution.

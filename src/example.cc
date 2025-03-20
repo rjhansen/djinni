@@ -22,7 +22,14 @@ using std::endl;
 
 int main() {
   // We start by defining a world:
-  auto filename = "/home/rjh/Projects/djinni/src/Dumas-1.set";
+  auto filename = 
+#ifdef _WIN32
+"C:/Users/rjh/source/repos/"
+#else
+"/home/rjh/Projects/"
+#endif
+"djinni/src/Dumas-1.set";
+
   auto world = TravelingSalesmanWorld::loadFromDumasFile(filename);
 
   // And now we define what valid solutions look like -- in this
