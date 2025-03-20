@@ -81,7 +81,7 @@ Djinni is an annealer with three pluggable mix-and-match components. They are
   space — but be careful: there’s no guarantee it’s an optimal one!
 * **Penalties.** A `penalty` is something which causes the annealer to
   over time become less likely to accept inferior solutions, ultimately
-  reaching a poit where it stabilizes on one solution because of the lack
+  reaching a point where it stabilizes on one solution because of the lack
   of superior nearby alternatives to explore.
 
 Djinni ships with a world designed to represent instances of the Traveling
@@ -149,7 +149,7 @@ Upon running this with an appropriate dataset, you might see output like:
 	"best_solution": {
 		"base_cost": 738,
 		"penalty":   0
-	}
+	},
 	"best_iteration":          75,
 	"iterations":              187,
 	"count_limit":             30000,
