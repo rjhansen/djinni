@@ -16,22 +16,22 @@
  * PERFORMANCE OF THIS SOFTWARE. */
 
 #include "djinni.h"
+#include "djinni/format.h"
 #include <filesystem>
 #include <iostream>
+#include <print>
 
 using edu::uiowa::tippie::djinni::Annealer;
 using edu::uiowa::tippie::djinni::Compression;
 using edu::uiowa::tippie::djinni::TravelingSalesmanSolution;
 using edu::uiowa::tippie::djinni::TravelingSalesmanWorld;
-using std::cerr;
-using std::cout;
-using std::endl;
+using std::println;
 using std::filesystem::exists;
 
 int main() {
   const char *filename{"Dumas-1.set"};
   if (!exists(filename)) {
-    cerr << "Error: couldn't find the file '" << filename << "'." << endl;
+    println("Error: couldn't find the file '{}'.", filename);
     return 1;
   }
   // We start by defining a world:
@@ -49,7 +49,7 @@ int main() {
   auto annealer =
       Annealer(penalty_function, initial_solution, 0.95, 0.94, 75, 100, 30000);
   annealer.solve();
-  cout << annealer << endl;
+  println("{}", annealer);
 
   return 0;
 }

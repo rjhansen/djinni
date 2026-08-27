@@ -1,0 +1,34 @@
+Source: djinni
+Section: libdevel
+Priority: optional
+Maintainer: Robert J. Hansen <rjh@sixdemonbag.org>
+Build-Depends: debhelper-compat (= 13),
+               meson (>= 1.0.0),
+               ninja-build,
+               g++ (>= 14),
+               pkg-config
+Standards-Version: 4.6.2
+Homepage: https://github.com/rjhansen/djinni
+Rules-Requires-Root: no
+
+# This is deliberately Architecture: any rather than Architecture: all.
+# The package content (headers) is architecture-independent, but its
+# pkg-config file installs into the multiarch-triplet library directory
+# (e.g. /usr/lib/x86_64-linux-gnu/pkgconfig/djinni.pc), and an
+# Architecture: all package installing into an arch-specific path is a
+# well-known source of packaging problems. Building one binary package per
+# architecture avoids that entirely, at the cost of a few redundant builds
+# of identical content.
+Package: libdjinni-dev
+Architecture: any
+Depends: ${misc:Depends}
+Description: header-only C++23 library implementing Ohlmann-Thomas compressed annealing
+ Djinni is a header-only C++23 library implementing Ohlmann-Thomas
+ compressed annealing, a simulated-annealing variant originally developed
+ for the Traveling Salesman Problem with Time Windows. It ships as a small
+ set of headers with no runtime dependencies beyond the C++23 standard
+ library, plus a pkg-config file so downstream projects can locate it with
+ pkg-config --cflags djinni.
+ .
+ There is nothing to link against: everything Djinni provides is templates
+ and inline functions in the installed headers.

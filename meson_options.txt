@@ -1,0 +1,2 @@
+option('faster', type: 'boolean', value: false,
+    description: 'Use the faster, less precise O(n^2) travel-time computation in TravelingSalesmanWorld instead of the default O(n^3) Floyd-Warshall relaxation (defines DJINNI_FASTER). See routes.h for details on the tradeoff.')

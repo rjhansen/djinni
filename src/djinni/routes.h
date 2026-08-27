@@ -175,14 +175,10 @@ public:
   //! Returns a reference to the Matrix used to store this world's data.
   [[nodiscard]] Matrix<double, 2> &data() { return _matrix; }
 
-  //! Returns a const reference to the identifying string used for this World.
-  [[nodiscard]] const std::string &identifier() const { return _identifier; }
-
 protected:
   Matrix<double, 2> _timeMatrix;
   Matrix<double, 2> _matrix;
   std::vector<double> _lowdeadlines, _deadlines;
-  std::string _identifier;
 
   virtual void computeTravelTimes() {
     uint32_t numCustomers = _matrix.size();
@@ -261,7 +257,7 @@ public:
   explicit TravelingSalesmanSolution(const char *worldParam)
       : _w(new WorldType{}), _f{0.0}, _p{0.0}, _firstswitch{0},
         _secondswitch{0}, _firstarrival{0}, _firstpenalty{0} {
-    *_w = WorldType::loadFromDumasFile();
+    *_w = WorldType::loadFromDumasFile(worldParam);
     _solution.resize(_w->data().size(), 0);
     _arrivaltime.resize(_solution.size(), 0);
     _penaltysum.resize(_solution.size(), 0);

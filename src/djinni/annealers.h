@@ -97,6 +97,10 @@ public:
   An Annealer constructor which takes all necessary parameters in
   one fell swoop.
 
+  Note that although pfunc is passed in by reference, we create our own local
+  copy of it and leave the passed parameter untouched. If you need/want to
+  inspect an Annealer's _pfunc member, use .getPenaltyFunc().
+
   @param pfunc The penalty function to be applied to this annealer
   @param sol A solution, populated randomly, to be applied to this annealer
   @param multT A value in the range 0.0 - 0.9999 representing the temperature
@@ -140,6 +144,10 @@ public:
   /*! An Annealer constructor for use when the parameters will be set after
   initialization.
 
+  Note that although pfunc is passed in by reference, we create our own local
+  copy of it and leave the passed parameter untouched. If you need/want to
+  inspect an Annealer's _pfunc member, use .getPenaltyFunc().
+
   @param pfunc The penalty function to be applied to this annealer
   @param sol A solution, populated randomly, to be applied to this annealer
   */
@@ -157,7 +165,12 @@ public:
   different question. */
   virtual ~Annealer() = default;
 
-  /*! Returns this Annealer's PenaltyFunc */
+  /*! Returns this Annealer's PenaltyFunc.
+
+  This is the Annealer's own local copy, not the object originally passed to
+  its constructor -- see the constructor docs for why. Any pressure-cap or
+  other tuning the Annealer performs during solve() is visible here, not on
+  your original object. */
   PenaltyFunc &getPenaltyFunc() { return _pfunc; }
 
   /*! Returns the best solution found by the annealer. */
@@ -349,6 +362,7 @@ protected:
    * the proper initial value. */
   void tuneTemperature() {
     int acceptedWorse, uphill;
+    double ratio;
     do {
       acceptedWorse = uphill = 0;
       for (uint32_t count = 0; count < _maxIterations; count++) {
@@ -370,11 +384,16 @@ protected:
              (_current->getF() < _best->getF())))
           *_best = *_current;
       }
-      if ((static_cast<double>(acceptedWorse) / static_cast<double>(uphill)) <
-          _acceptProb)
+      // If every move this pass was improving, there were no uphill moves
+      // to measure acceptance of, and acceptedWorse/uphill would be the
+      // undefined 0/0. Treat "nothing but improving moves" as already
+      // meeting the acceptance target, rather than dividing by zero.
+      ratio = uphill == 0 ? _acceptProb
+                          : static_cast<double>(acceptedWorse) /
+                                static_cast<double>(uphill);
+      if (ratio < _acceptProb)
         _currentT = 1.5 * _currentT;
-    } while ((static_cast<double>(acceptedWorse) /
-              static_cast<double>(uphill)) < _acceptProb);
+    } while (ratio < _acceptProb);
   }
 
   /*! Tests a neighbor for superiority or inferiority, and may update our

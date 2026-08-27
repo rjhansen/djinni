@@ -1,4 +1,4 @@
-foreach name : ['compression', 'simulated']
+foreach name : ['compression', 'simulated', 'solution_ctor']
     exe = executable('test_' + name, 'test_' + name + '.cc',
         dependencies: djinni_dep,
     )

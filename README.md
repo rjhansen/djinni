@@ -72,6 +72,13 @@ system’s path in order to use them.
   and wait. The Djinni headers will be collected into a compressed folder
   for you, so that you may place them wherever you like for your project.
 
+If you want to configure Djinni yourself rather than using the scripts,
+`meson setup builddir` accepts a `-Dfaster=true` option. This switches
+`TravelingSalesmanWorld` to a faster, O(n²) travel-time computation instead
+of the default O(n³) Floyd-Warshall relaxation, at the cost of very
+occasionally rounding a travel time up by one unit. See `routes.h` for the
+full explanation of the tradeoff.
+
 ## Using Djinni
 
 Djinni is an annealer with three pluggable mix-and-match components. They are
@@ -94,19 +101,30 @@ Thus, our source code might look something like:
 
 ```c++
 #include "djinni.h"
+#include "djinni/format.h" // for std::println support
+#include <filesystem>
 #include <iostream>
+#include <print>
 
 using edu::uiowa::tippie::djinni::TravelingSalesmanWorld;
 using edu::uiowa::tippie::djinni::TravelingSalesmanSolution;
 using edu::uiowa::tippie::djinni::Compression;
 using edu::uiowa::tippie::djinni::Annealer;
-using std::cout;
-using std::endl;
+using std::filesystem::exists;
+using std::println;
 
 int main()
 {
+  // Dumas-format files are just plain text -- if this one isn't where we
+  // expect, say so plainly rather than silently annealing an empty world.
+  const char *filename{"Dumas-1.set"};
+  if (!exists(filename)) {
+    println("Error: couldn't find the file '{}'.", filename);
+    return 1;
+  }
+
   // Populate our world data from a Dumas dataset
-  auto world = TravelingSalesmanWorld::loadFromDumasFile("Dumas-1.set");
+  auto world = TravelingSalesmanWorld::loadFromDumasFile(filename);
 
   // Construct an initial random route through our solution space
   auto initial_solution = TravelingSalesmanSolution(world);
@@ -138,7 +156,7 @@ int main()
   // is as easy as hitting '.solve()' and dumping the annealer object
   // to the I/O stream of your choice.
   annealer.solve();
-  cout << annealer << endl;
+  println("{}", annealer);
   return 0;
 }
 ```

@@ -12,6 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-26.04, macos-15, windows-2022]
+        faster: [false, true]
 
     runs-on: ${{ matrix.os }}
 
@@ -38,14 +39,17 @@ jobs:
         run: pip install --upgrade meson ninja
 
       - name: Configure
-        run: meson setup builddir --buildtype=release
+        run: meson setup builddir --buildtype=release -Dfaster=${{ matrix.faster }}
 
-      - name: Build and test
+      - name: Build
+        run: meson compile -C builddir
+
+      - name: Test
         run: meson test -C builddir -v
 
       - name: Upload test log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: testlog-${{ matrix.os }}
+          name: testlog-${{ matrix.os }}-faster-${{ matrix.faster }}
           path: builddir/meson-logs/testlog.txt
