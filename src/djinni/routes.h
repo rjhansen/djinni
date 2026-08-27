@@ -27,6 +27,7 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace edu::uiowa::tippie::djinni {
@@ -452,6 +453,52 @@ public:
     _secondswitch = route._secondswitch;
     _firstarrival = route._firstarrival;
     _firstpenalty = route._firstpenalty;
+    return *this;
+  }
+
+  /*! Move constructor.
+
+  Unlike the copy constructor, this does move _prng/_dis: route is being
+  discarded, not kept alive alongside this object, so there's no
+  correlated-streams risk to guard against here -- taking over its
+  already-seeded engine is just cheaper than reseeding from scratch. This
+  exists so Annealer can hold SolutionType by value and swap _current/
+  _neighbor via std::swap() in O(1) instead of copying the full solution
+  on every accepted move.
+
+  @param route The route to move from. */
+  TravelingSalesmanSolution(TravelingSalesmanSolution<WorldType> &&route) noexcept
+      : _w(std::move(route._w)), _solution(std::move(route._solution)),
+        _f(route._f), _p(route._p),
+        _arrivaltime(std::move(route._arrivaltime)),
+        _penaltysum(std::move(route._penaltysum)),
+        _firstswitch(route._firstswitch), _secondswitch(route._secondswitch),
+        _firstarrival(route._firstarrival), _firstpenalty(route._firstpenalty),
+        _prng(std::move(route._prng)), _dis(std::move(route._dis)) {}
+
+  /*! Move assignment operator.
+
+  Like the move constructor (and unlike copy assignment), this moves
+  _prng/_dis too -- see the move constructor's docs for why.
+
+  @param route The route to move from.
+  @return *this, for chaining. */
+  TravelingSalesmanSolution &
+  operator=(TravelingSalesmanSolution<WorldType> &&route) noexcept {
+    if (this == &route)
+      return *this;
+    _w = std::move(route._w);
+    _solution = std::move(route._solution);
+    _f = route._f;
+    _p = route._p;
+    _arrivaltime = std::move(route._arrivaltime);
+    _penaltysum = std::move(route._penaltysum);
+    _firstswitch = route._firstswitch;
+    _secondswitch = route._secondswitch;
+    _firstarrival = route._firstarrival;
+    _firstpenalty = route._firstpenalty;
+    _prng = std::move(route._prng);
+    _dis = std::move(route._dis);
     return *this;
   }
 

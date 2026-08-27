@@ -19,10 +19,10 @@
 #include <cmath>
 #include <concepts>
 #include <iosfwd>
-#include <memory>
 #include <random>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace edu::uiowa::tippie::djinni {
 //! The contract a PenaltyFunc must satisfy to be used with Annealer.
@@ -113,8 +113,8 @@ public:
   */
   Annealer(const PenaltyFunc &pfunc, SolutionType &sol, double multT,
            double accept, uint32_t tBI, uint32_t minIter, uint32_t maxIter)
-      : _best(new SolutionType(sol)), _current(new SolutionType(*_best)),
-        _neighbor(new SolutionType(*_best)), _bestIter(0), _iterations(0),
+      : _best(sol), _current(_best),
+        _neighbor(_best), _bestIter(0), _iterations(0),
         _maxIterations(maxIter), _minIterations(minIter),
         _terminalBestIter(tBI), _multiplierT(multT), _acceptProb(accept),
         _currentT(0), _pfunc(pfunc),
@@ -135,8 +135,8 @@ public:
 
   Annealer(SolutionType &solution, double multT, double accept, uint32_t tBI,
            uint32_t minIter, uint32_t maxIter)
-      : _best(new SolutionType(solution)), _current(new SolutionType(*_best)),
-        _neighbor(new SolutionType(*_best)), _bestIter(0), _iterations(0),
+      : _best(solution), _current(_best),
+        _neighbor(_best), _bestIter(0), _iterations(0),
         _maxIterations(maxIter), _minIterations(minIter),
         _terminalBestIter(tBI), _multiplierT(multT), _acceptProb(accept),
         _currentT(0), _lambda(PenaltyFunc::defaultReturnTypeValue) {}
@@ -152,8 +152,8 @@ public:
   @param sol A solution, populated randomly, to be applied to this annealer
   */
   Annealer(const PenaltyFunc &pfunc, SolutionType &sol)
-      : _best(new SolutionType(sol)), _current(new SolutionType(*_best)),
-        _neighbor(new SolutionType(*_best)), _bestIter(0), _iterations(0),
+      : _best(sol), _current(_best),
+        _neighbor(_best), _bestIter(0), _iterations(0),
         _maxIterations(0), _minIterations(0), _terminalBestIter(0),
         _multiplierT(0), _acceptProb(0), _currentT(0), _pfunc(pfunc),
         _lambda(PenaltyFunc::defaultReturnTypeValue) {}
@@ -165,23 +165,26 @@ public:
   different question. */
   virtual ~Annealer() = default;
 
-  /*! Copying is disabled. _best/_current/_neighbor are unique_ptrs --
-  exclusively owned, never shared with anything outside this Annealer --
-  so this is now enforced implicitly by the compiler too; the explicit
-  deletion here just documents the reason rather than leaving it to a
-  generic "use of deleted function" error. (Before these became
-  unique_ptrs, they were shared_ptrs with no such protection: a
-  compiler-generated copy would have aliased the same underlying
-  SolutionType objects instead of duplicating them, letting two
-  "independent" Annealers silently corrupt each other's state.) Nothing
-  in this codebase copies an Annealer; each constructor already takes
-  its inputs by reference and makes its own deep copies internally, so
-  there's no legitimate use for a copy to begin with.
+  /*! Copying is disabled. _best/_current/_neighbor are now plain
+  SolutionType values, so a compiler-generated copy would duplicate them
+  correctly (TravelingSalesmanSolution's own copy constructor already
+  gives each copy an independently-seeded _prng, exactly to avoid
+  correlated runs -- see its docs in routes.h). What's still unsafe is
+  this class's *own* _prng/_urd below: they have no such protection, so
+  a naive copy would copy that engine's state verbatim, and the
+  original and the copy would then draw the identical sequence of
+  temperature-acceptance decisions from the point of copying onward --
+  the same "independent runs secretly correlated" problem the comment
+  on _prng/_urd warns about, just one level up. Nothing in this codebase
+  copies an Annealer; each constructor already takes its inputs by
+  reference and makes its own deep copies internally, so there's no
+  legitimate use for a copy to begin with.
 
   Move is fine (and re-enabled here since declaring the destructor above
   already suppresses the implicitly-declared move operations): moving
-  transfers ownership of _best/_current/_neighbor rather than aliasing
-  them, so there's no sharing hazard. */
+  transfers state out of the source rather than duplicating it alongside
+  the source, so there's no risk of the two ever running in parallel
+  with correlated state. */
   Annealer(const Annealer &) = delete;
   Annealer &operator=(const Annealer &) = delete;
   Annealer(Annealer &&) = default;
@@ -196,7 +199,7 @@ public:
   PenaltyFunc &getPenaltyFunc() { return _pfunc; }
 
   /*! Returns the best solution found by the annealer. */
-  const SolutionType &best() const { return *_best; }
+  const SolutionType &best() const { return _best; }
 
   /*! Returns the current solution in use by the annealer.
 
@@ -204,13 +207,13 @@ public:
   the solve() method, you're on an uninterruptible trip to the end.
   However, in the event you want to subclass and do funky things, you
   have an accessor. */
-  const SolutionType &current() const { return *_current; }
+  const SolutionType &current() const { return _current; }
 
   /*! For a completely-constructed annealer, initiate the solution process and
    * do not return until termination. */
   void solve() {
-    *_current = *_best;
-    _best->setP(1000000);
+    _current = _best;
+    _best.setP(1000000);
     // Reset so a second solve() call (e.g. after setSolutionParameters())
     // starts from scratch instead of inheriting state left over from the
     // previous run. This has to happen before tuneTemperature(), which
@@ -224,12 +227,12 @@ public:
     while ((_iterations <= _minIterations) || (_bestIter < _terminalBestIter)) {
       ++_iterations;
       for (uint32_t count = 0; count < _maxIterations; ++count) {
-        _current->generateNeighbor(*_neighbor);
+        _current.generateNeighbor(_neighbor);
         testNeigh();
-        if ((_current->getP() < _best->getP()) ||
-            (_current->getP() == _best->getP() &&
-             _current->getF() < _best->getF())) {
-          (*_best) = (*_current);
+        if ((_current.getP() < _best.getP()) ||
+            (_current.getP() == _best.getP() &&
+             _current.getF() < _best.getF())) {
+          _best = _current;
           _bestIter = 1;
         }
       }
@@ -245,7 +248,7 @@ public:
   annealer. */
   [[nodiscard]] std::string solution() const {
     std::stringstream ss;
-    ss << (*_best);
+    ss << _best;
     std::string result = ss.str();
     return result;
   }
@@ -273,9 +276,9 @@ public:
 
   @param foo A char* containing the solution parameters */
   void setSolutionParameters(const char *foo) {
-    _best = std::make_unique<SolutionType>(foo);
-    _current = std::make_unique<SolutionType>(*_best);
-    _neighbor = std::make_unique<SolutionType>(*_best);
+    _best = SolutionType(foo);
+    _current = _best;
+    _neighbor = _best;
   }
 
   /*! Allows for an Annealer object's internal state to be dumped in
@@ -287,8 +290,8 @@ public:
   @param os The output stream to dump it to
   @return The output stream os after the operation completes */
   std::ostream &dump(std::ostream &os) const {
-    os << "{\n\t\"best_solution\": {\n\t\t\"base_cost\": " << (_best->getF())
-       << ",\n\t\t\"penalty\":   " << (_best->getP()) << "\n\t},\n\t"
+    os << "{\n\t\"best_solution\": {\n\t\t\"base_cost\": " << (_best.getF())
+       << ",\n\t\t\"penalty\":   " << (_best.getP()) << "\n\t},\n\t"
        << "\"best_iteration\":          " << _bestIter << ",\n\t"
        << "\"iterations\":              " << _iterations << ",\n\t"
        << "\"count_limit\":             " << _maxIterations << ",\n\t"
@@ -304,12 +307,12 @@ public:
   /*! Returns the cost of the best solution found by the annealer.
 
   @return The cost of the best solution found by the annealer.*/
-  [[nodiscard]] double cost() const { return _best->getF(); }
+  [[nodiscard]] double cost() const { return _best.getF(); }
 
   /*! Returns the penalty incurred by the best solution found by the annealer.
 
   @return The penalty incurred by the best solution found by the annealer. */
-  [[nodiscard]] double penalty() const { return _best->getP(); }
+  [[nodiscard]] double penalty() const { return _best.getP(); }
   /*! Returns the number of the iteration on which the best solution was
   encountered.
 
@@ -360,24 +363,24 @@ protected:
       scale = _pfunc.getCapPercentage() / (1 - _pfunc.getCapPercentage());
 
     for (uint32_t j = 0; j < _sampleSize - 1; j += 2) {
-      _current->randomize();
-      _current->compute();
-      _current->generateNeighbor(*_neighbor);
+      _current.randomize();
+      _current.compute();
+      _current.generateNeighbor(_neighbor);
       if constexpr (PressureCapped<PenaltyFunc>) {
         double lambda0;
-        if (_current->getP() > 0) {
-          lambda0 = (_current->getF() / _current->getP()) * scale;
+        if (_current.getP() > 0) {
+          lambda0 = (_current.getF() / _current.getP()) * scale;
           if (lambda0 > cap)
             cap = lambda0;
         }
-        if (_neighbor->getP() > 0) {
-          lambda0 = (_neighbor->getF() / _neighbor->getP()) * scale;
+        if (_neighbor.getP() > 0) {
+          lambda0 = (_neighbor.getF() / _neighbor.getP()) * scale;
           if (lambda0 > cap)
             cap = lambda0;
         }
       }
-      double u = (_current->getF() + lambda1 * _current->getP()) -
-                 (_neighbor->getF() + lambda1 * _neighbor->getP());
+      double u = (_current.getF() + lambda1 * _current.getP()) -
+                 (_neighbor.getF() + lambda1 * _neighbor.getP());
       sum += u > 0 ? u : (-1 * u);
     }
     if constexpr (PressureCapped<PenaltyFunc>)
@@ -395,23 +398,23 @@ protected:
     do {
       acceptedWorse = uphill = 0;
       for (uint32_t count = 0; count < _maxIterations; count++) {
-        _current->generateNeighbor(*_neighbor);
-        double delta = (_neighbor->getF() + _lambda * _neighbor->getP()) -
-                       (_current->getF() + _lambda * _current->getP());
+        _current.generateNeighbor(_neighbor);
+        double delta = (_neighbor.getF() + _lambda * _neighbor.getP()) -
+                       (_current.getF() + _lambda * _current.getP());
         if (delta < 0)
-          _current.swap(_neighbor);
+          std::swap(_current, _neighbor);
         else {
           uphill++;
           double u = 0 - delta / _currentT;
           if (randomReal() < exp(u)) {
-            _current.swap(_neighbor);
+            std::swap(_current, _neighbor);
             acceptedWorse++;
           }
         }
-        if ((_current->getP() < _best->getP()) ||
-            ((_current->getP() == _best->getP()) &&
-             (_current->getF() < _best->getF())))
-          *_best = *_current;
+        if ((_current.getP() < _best.getP()) ||
+            ((_current.getP() == _best.getP()) &&
+             (_current.getF() < _best.getF())))
+          _best = _current;
       }
       // If every move this pass was improving, there were no uphill moves
       // to measure acceptance of, and acceptedWorse/uphill would be the
@@ -428,14 +431,14 @@ protected:
   /*! Tests a neighbor for superiority or inferiority, and may update our
    * _current solution based on the result. */
   void testNeigh() {
-    double delta = (_neighbor->getF() + _lambda * _neighbor->getP()) -
-                   (_current->getF() + _lambda * _current->getP());
+    double delta = (_neighbor.getF() + _lambda * _neighbor.getP()) -
+                   (_current.getF() + _lambda * _current.getP());
     if (delta < 0)
-      _current.swap(_neighbor);
+      std::swap(_current, _neighbor);
     else {
       double u = 0 - delta / _currentT;
       if (randomReal() < exp(u))
-        _current.swap(_neighbor);
+        std::swap(_current, _neighbor);
     }
   }
 
@@ -445,7 +448,7 @@ protected:
     _lambda = _pfunc(_iterations);
   }
 
-  std::unique_ptr<SolutionType> _best, _current, _neighbor;
+  SolutionType _best, _current, _neighbor;
 
   uint32_t _bestIter, _iterations, _maxIterations{}, _minIterations{},
       _terminalBestIter;
