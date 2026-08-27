@@ -127,10 +127,11 @@ public:
     return loadFromDumasString(str);
   };
 
-  static TravelingSalesmanWorld loadFromDumasString(std::string dumasStr) {
+  static TravelingSalesmanWorld
+  loadFromDumasString(const std::string &dumasStr) {
     TravelingSalesmanWorld tsp;
     std::smatch match;
-    size_t pos = 0;
+    size_t start = 0;
     static std::regex drx("^\\s*(\\d+)"
                           "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
                           "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
@@ -139,8 +140,10 @@ public:
                           "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
                           "(\\s+[+-]?[0-9]*[.]?[0-9]+)"
                           "\\s*$");
-    while ((pos = dumasStr.find('\n')) != std::string::npos) {
-      std::string line = dumasStr.substr(0, pos);
+    size_t pos;
+    while ((pos = dumasStr.find('\n', start)) != std::string::npos) {
+      std::string line = dumasStr.substr(start, pos - start);
+      start = pos + 1;
       if (std::regex_match(line, match, drx)) {
         if (999 == std::stoi(match[1].str()))
           break;
@@ -149,7 +152,6 @@ public:
           row[i] = std::stod(match[i + 2].str());
         tsp.data().push_back(Matrix<double, 1>(row));
       }
-      dumasStr.erase(0, pos + 1);
     }
     tsp.computeTravelTimes();
     return tsp;
@@ -185,6 +187,22 @@ protected:
   virtual void computeTravelTimes() {
     uint32_t numCustomers = _matrix.size();
     _timeMatrix.resize(numCustomers);
+#ifdef DJINNI_FASTER
+    // Travel times are plain Euclidean distances, which already satisfy the
+    // triangle inequality exactly: no route via a third customer k is ever
+    // shorter than the direct one, so no all-pairs relaxation is needed.
+    // (Flooring each leg independently before comparing sums, as the
+    // non-DJINNI_FASTER path below does, could make an indirect sum look
+    // shorter than the direct distance -- but that's an artifact of
+    // rounding twice before comparing, not a real shorter path.)
+    for (uint32_t i = 0; i < numCustomers; i++) {
+      _timeMatrix[i].resize(numCustomers);
+      for (uint32_t j = 0; j < numCustomers; j++)
+        _timeMatrix[i][j] = ::floor(::sqrt(
+            (_matrix[i][0] - _matrix[j][0]) * (_matrix[i][0] - _matrix[j][0]) +
+            (_matrix[i][1] - _matrix[j][1]) * (_matrix[i][1] - _matrix[j][1])));
+    }
+#else
     for (uint32_t i = 0; i < numCustomers; i++) {
       _timeMatrix[i].resize(numCustomers);
       for (uint32_t j = 0; j < numCustomers; j++) {
@@ -199,6 +217,7 @@ protected:
         for (uint32_t k = 0; k < numCustomers; k++)
           if (_timeMatrix[i][j] > (_timeMatrix[i][k] + _timeMatrix[k][j]))
             _timeMatrix[i][j] = _timeMatrix[i][k] + _timeMatrix[k][j];
+#endif
     _lowdeadlines.resize(numCustomers);
     _deadlines.resize(numCustomers);
     for (uint32_t i = 0; i <= numCustomers - 1; i++) {
