@@ -18,6 +18,7 @@
 #pragma once
 #include <cmath>
 #include <concepts>
+#include <cstdint>
 #include <iosfwd>
 #include <random>
 #include <sstream>
@@ -33,7 +34,7 @@ namespace edu::uiowa::tippie::djinni {
    deep in a template instantiation error. */
 template <class P>
 concept PenaltyFunction =
-    std::copy_constructible<P> && requires(P p, int iter) {
+    std::copy_constructible<P> && requires(P p, uint32_t iter) {
       typename P::ReturnType;
       {
         P::defaultReturnTypeValue

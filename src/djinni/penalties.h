@@ -17,6 +17,7 @@
 
 #pragma once
 #include <cmath>
+#include <cstdint>
 
 namespace edu::uiowa::tippie::djinni {
 //! A penalty function for annealing which substantially implements the
@@ -97,11 +98,11 @@ public:
   @return The exponential factor used in compression */
   [[nodiscard]] double getExpPower() const { return _expPower; }
 
-  /*! The required operator()(int) common to all PenaltyFuncs.
+  /*! The required operator()(uint32_t) common to all PenaltyFuncs.
 
   In Compression annealing, the return value varies over iterations.
   For many other types, this will simply return a constant value. */
-  ReturnType operator()(const int iter) const {
+  ReturnType operator()(const uint32_t iter) const {
     return _pressureCap * (1 - exp(-1 * _expPower * iter));
   }
 
@@ -153,12 +154,12 @@ public:
   @param multiplier The multiplier to use */
   void setMultiplier(const double multiplier) { _mult = multiplier; }
 
-  /*! All PenaltyFuncs must implement operator()(const int iter).
+  /*! All PenaltyFuncs must implement operator()(const uint32_t iter).
 
   However, for simulated annealing a constant value is always returned.
 
   */
-  ReturnType operator()(const int) const { return _mult; }
+  ReturnType operator()(const uint32_t) const { return _mult; }
 
 protected:
   double _mult;
