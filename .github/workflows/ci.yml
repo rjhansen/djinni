@@ -53,3 +53,58 @@ jobs:
         with:
           name: testlog-${{ matrix.os }}-faster-${{ matrix.faster }}
           path: builddir/meson-logs/testlog.txt
+
+  sanitize:
+    # ASan/UBSan catch a much wider class of memory-safety bugs than the
+    # test suite's own assertions do -- every memory bug found in the
+    # 2026-08 hardening pass was caught this way, by hand, before this job
+    # existed. Skips Windows/MSVC: -fsanitize=address,undefined is a
+    # GCC/Clang flag combination, and MSVC's ASan doesn't support UBSan or
+    # the same invocation meson's b_sanitize option targets.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-26.04, macos-15]
+        faster: [false, true]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Install a C++23-capable GCC (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-14 g++-14
+          echo "CC=gcc-14" >> "$GITHUB_ENV"
+          echo "CXX=g++-14" >> "$GITHUB_ENV"
+
+      - name: Install Meson and Ninja
+        run: pip install --upgrade meson ninja
+
+      - name: Configure (ASan + UBSan)
+        # debugoptimized, not debug: -O0 + sanitizers pushed a single
+        # test run past the 60s per-test timeout locally (~65s); -O2
+        # brought the same run down to ~11s while keeping debug symbols
+        # for readable sanitizer stack traces.
+        run: |
+          meson setup builddir --buildtype=debugoptimized \
+            -Db_sanitize=address,undefined -Dfaster=${{ matrix.faster }}
+
+      - name: Build
+        run: meson compile -C builddir
+
+      - name: Test
+        run: meson test -C builddir -v
+
+      - name: Upload test log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: testlog-sanitize-${{ matrix.os }}-faster-${{ matrix.faster }}
+          path: builddir/meson-logs/testlog.txt
