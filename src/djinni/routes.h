@@ -152,7 +152,7 @@ public:
     std::string str(std::istreambuf_iterator<char>{in},
                     std::istreambuf_iterator<char>{});
     return loadFromDumasString(str);
-  };
+  }
 
   static TravelingSalesmanWorld
   loadFromDumasString(const std::string &dumasStr) {
@@ -193,7 +193,7 @@ public:
     }
     tsp.computeTravelTimes();
     return tsp;
-  };
+  }
 
   [[nodiscard]] const Matrix<double, 2> &travelTimes() const {
     return _timeMatrix;
