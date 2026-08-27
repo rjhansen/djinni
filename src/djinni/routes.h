@@ -122,6 +122,27 @@ protected:
 class TravelingSalesmanWorld {
 public:
   TravelingSalesmanWorld() = default;
+  virtual ~TravelingSalesmanWorld() = default;
+
+  /*! Copy operations stay available (TravelingSalesmanSolution's
+  WorldType-reference constructor needs to copy-construct its own World
+  from the one it's given), but declaring the move operations below would
+  otherwise implicitly delete them, so they're spelled out here too.
+
+  Move operations are new: without them, moving a TravelingSalesmanWorld
+  silently fell back to copying it instead (a user-declared destructor
+  suppresses the implicitly-declared move constructor/assignment, same
+  as it did for Annealer and TravelingSalesmanSolution before those were
+  fixed) -- meaning every *_w = WorldType::loadFromDumasFile(...) in
+  TravelingSalesmanSolution's char* constructor deep-copied the full
+  O(n^2) _matrix/_timeMatrix from the temporary and then threw the
+  temporary away, rather than just taking its buffers. No member here
+  needs special handling the way TravelingSalesmanSolution's _prng/_dis
+  did, so plain defaults are correct. */
+  TravelingSalesmanWorld(const TravelingSalesmanWorld &) = default;
+  TravelingSalesmanWorld &operator=(const TravelingSalesmanWorld &) = default;
+  TravelingSalesmanWorld(TravelingSalesmanWorld &&) = default;
+  TravelingSalesmanWorld &operator=(TravelingSalesmanWorld &&) = default;
 
   static TravelingSalesmanWorld loadFromDumasFile(std::string filename) {
     std::ifstream in(filename);
@@ -173,8 +194,6 @@ public:
     tsp.computeTravelTimes();
     return tsp;
   };
-
-  virtual ~TravelingSalesmanWorld() = default;
 
   [[nodiscard]] const Matrix<double, 2> &travelTimes() const {
     return _timeMatrix;
