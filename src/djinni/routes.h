@@ -18,6 +18,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <fstream>
@@ -378,10 +379,17 @@ protected:
   after construction, when both default to 0) reads _solution at index
   -1. */
   void update() {
+    // firstswitch/secondswitch are always in [1, numCustomers-1]: only
+    // generateNeighbor() sets them (see this function's docs above), and
+    // its switch-index picker never produces 0. That invariant is what
+    // makes every "- 1" below safe as unsigned arithmetic instead of the
+    // signed scratch space this function used to hold them in.
+    assert(_firstswitch >= 1 && _secondswitch >= 1 &&
+          _firstswitch < _solution.size() && _secondswitch < _solution.size());
     double cost = getF();
-    int firstswitch = _firstswitch;
-    int secondswitch = _secondswitch;
-    int numCustomers = _solution.size();
+    uint32_t firstswitch = _firstswitch;
+    uint32_t secondswitch = _secondswitch;
+    uint32_t numCustomers = _solution.size();
     const std::vector<uint32_t> &tour = _solution;
     const Matrix<double, 2> &travTime = _w->travelTimes();
     if (firstswitch <= secondswitch) {
@@ -588,8 +596,12 @@ protected:
 
   /*! Update the travel schedule. */
   void timingUpdate() {
-    int start;
-    int numCustomers = _solution.size();
+    // See update()'s assert above: same invariant, same reason it's safe
+    // to use unsigned arithmetic for start/i below.
+    assert(_firstswitch >= 1 && _secondswitch >= 1 &&
+          _firstswitch < _solution.size() && _secondswitch < _solution.size());
+    uint32_t start;
+    uint32_t numCustomers = _solution.size();
     const Matrix<double, 2> &travTime = _w->travelTimes();
     const std::vector<double> &lowdeadlines = _w->lowDeadlines();
     const std::vector<double> &deadlines = _w->deadlines();
@@ -602,7 +614,7 @@ protected:
 
     _arrivaltime[start - 1] = _firstarrival;
     _penaltysum[start - 1] = _firstpenalty;
-    for (int i = start; i <= numCustomers - 1; i++) {
+    for (uint32_t i = start; i <= numCustomers - 1; i++) {
       if (_arrivaltime[i - 1] >= lowdeadlines[tour[i - 1]])
         _arrivaltime[i] = _arrivaltime[i - 1] + travTime[tour[i - 1]][tour[i]];
       else
