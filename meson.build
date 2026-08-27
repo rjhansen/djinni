@@ -47,6 +47,19 @@ djinni_dep = declare_dependency(
 )
 dumas_dataset = meson.project_source_root() / 'src' / 'Dumas-1.set'
 
+# Extra flags for the test programs (the four tests/test_*.cc executables
+# plus djinni_example, which doubles as the 'example' test) specifically:
+# debug info plus speed optimization, regardless of --buildtype. Neither
+# buildtype in common use here gives both -- the unset default (debug)
+# gives -g -O0, and --buildtype=release (used by build.sh/build.ps1 and
+# CI's main job) gives -O3 with no debug info. Appended as target-level
+# cpp_args rather than project-wide args or a buildtype change, so it
+# only affects these programs and -O2 reliably wins over any buildtype-
+# supplied -O flag (GCC/Clang take the last -O on the command line, and
+# target args land after buildtype-injected ones). No MSVC form: the
+# request was scoped to clang/g++.
+test_cpp_args = cpp.get_argument_syntax() == 'msvc' ? [] : ['-g', '-O2']
+
 subdir('src')
 subdir('tests')
 
