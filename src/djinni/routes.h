@@ -335,7 +335,14 @@ public:
     neighbor.update();
   }
 
-  /*! Update schedules, member data, etc., based on current state. */
+protected:
+  /*! Update schedules, member data, etc., based on current state.
+
+  Not part of the public interface: it's only safe to call once
+  generateNeighbor() has populated _firstswitch/_secondswitch, which is
+  the only place this library calls it. Calling it earlier (e.g. right
+  after construction, when both default to 0) reads _solution at index
+  -1. */
   void update() {
     double cost = getF();
     int firstswitch = _firstswitch;
@@ -382,6 +389,7 @@ public:
     setP(_penaltysum[numCustomers - 1]);
   }
 
+public:
   /*! Randomize this TravelingSalesmanSolution. */
   void randomize() {
     for (uint32_t i = 0; i < _solution.size(); i += 1)
