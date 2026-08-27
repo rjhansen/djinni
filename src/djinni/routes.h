@@ -324,11 +324,11 @@ public:
     neighbor.setF(getF());
     neighbor.setP(getP());
     while (0 == firstswitch)
-      firstswitch = static_cast<int>((numCustomers - 1) * _dis(_prng)) + 1;
+      firstswitch = static_cast<uint32_t>((numCustomers - 1) * _dis(_prng)) + 1;
     uint32_t secondswitch = firstswitch;
     while ((secondswitch == firstswitch) || (secondswitch == firstswitch - 1))
-      secondswitch = static_cast<int>((numCustomers - 1) * _dis(_prng)) + 1;
-    int holder = _solution[firstswitch];
+      secondswitch = static_cast<uint32_t>((numCustomers - 1) * _dis(_prng)) + 1;
+    uint32_t holder = _solution[firstswitch];
     if (firstswitch < secondswitch) {
       std::copy(_solution.begin(), _solution.begin() + firstswitch,
                 neighbor._solution.begin());
@@ -382,7 +382,7 @@ protected:
     int firstswitch = _firstswitch;
     int secondswitch = _secondswitch;
     int numCustomers = _solution.size();
-    const std::vector<int> &tour = _solution;
+    const std::vector<uint32_t> &tour = _solution;
     const Matrix<double, 2> &travTime = _w->travelTimes();
     if (firstswitch <= secondswitch) {
       if (secondswitch != (numCustomers - 1)) {
@@ -427,7 +427,7 @@ public:
   /*! Randomize this TravelingSalesmanSolution. */
   void randomize() {
     for (uint32_t i = 0; i < _solution.size(); i += 1)
-      _solution[i] = static_cast<int>(i);
+      _solution[i] = i;
     auto iter = _solution.begin();
     ++iter;
     std::shuffle(iter, _solution.end(), _prng);
@@ -525,7 +525,7 @@ public:
   @param os The output stream to dump our path to
   @return The output stream after we've dumped in it */
   std::ostream &dump(std::ostream &os) const {
-    std::ostream_iterator<int> oiter(os, " ");
+    std::ostream_iterator<uint32_t> oiter(os, " ");
     std::ranges::copy(_solution, oiter);
     return os;
   }
@@ -593,7 +593,7 @@ protected:
     const Matrix<double, 2> &travTime = _w->travelTimes();
     const std::vector<double> &lowdeadlines = _w->lowDeadlines();
     const std::vector<double> &deadlines = _w->deadlines();
-    const std::vector<int> &tour = _solution;
+    const std::vector<uint32_t> &tour = _solution;
 
     if (_firstswitch < _secondswitch)
       start = _firstswitch;
@@ -617,7 +617,7 @@ protected:
   }
 
   std::shared_ptr<WorldType> _w;
-  std::vector<int> _solution;
+  std::vector<uint32_t> _solution;
   double _f, _p;
   std::vector<double> _arrivaltime;
   std::vector<double> _penaltysum;
