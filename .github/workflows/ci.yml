@@ -89,9 +89,9 @@ jobs:
 
       - name: Configure (ASan + UBSan)
         # debugoptimized, not debug: -O0 + sanitizers pushed a single
-        # test run past the 60s per-test timeout locally (~65s); -O2
-        # brought the same run down to ~11s while keeping debug symbols
-        # for readable sanitizer stack traces.
+        # test run past the 60s per-test timeout locally (~65s, clang on
+        # Apple silicon); -O2 brought that down to ~11s while keeping
+        # debug symbols for readable sanitizer stack traces.
         run: |
           meson setup builddir --buildtype=debugoptimized \
             -Db_sanitize=address,undefined -Dfaster=${{ matrix.faster }}
@@ -100,7 +100,15 @@ jobs:
         run: meson compile -C builddir
 
       - name: Test
-        run: meson test -C builddir -v
+        # --timeout-multiplier: the -O2 fix above was only measured with
+        # clang on a fast local machine. On ubuntu-26.04's gcc-14 +
+        # shared CI hardware, every test except the fast solution_ctor
+        # one hit the plain 60s timeout for real (not hanging -- gcc's
+        # sanitizer instrumentation plus a slower/shared runner just
+        # needs more than 60s here). macOS's clang legs never needed
+        # this. 6x gives real headroom without the job running
+        # indefinitely if something is actually wrong.
+        run: meson test -C builddir -v --timeout-multiplier 6
 
       - name: Upload test log on failure
         if: failure()
