@@ -124,6 +124,9 @@ public:
 
   static TravelingSalesmanWorld loadFromDumasFile(std::string filename) {
     std::ifstream in(filename);
+    if (!in.is_open())
+      throw std::runtime_error("TravelingSalesmanWorld: couldn't open file '" +
+                               filename + "'");
     std::string str(std::istreambuf_iterator<char>{in},
                     std::istreambuf_iterator<char>{});
     return loadFromDumasString(str);
@@ -147,12 +150,23 @@ public:
       std::string line = dumasStr.substr(start, pos - start);
       start = pos + 1;
       if (std::regex_match(line, match, drx)) {
-        if (999 == std::stoi(match[1].str()))
-          break;
-        std::vector<double> row(6);
-        for (uint32_t i = 0; i < 6; i += 1)
-          row[i] = std::stod(match[i + 2].str());
-        tsp.data().push_back(Matrix<double, 1>(row));
+        // The regex only confirms the fields look numeric, not that they
+        // fit in an int/double -- stoi/stod throw std::out_of_range on a
+        // field with too many digits. Turn that into a well-defined,
+        // catchable error instead of letting it propagate as an unrelated
+        // library exception (or, uncaught, terminate the process).
+        try {
+          if (999 == std::stoi(match[1].str()))
+            break;
+          std::vector<double> row(6);
+          for (uint32_t i = 0; i < 6; i += 1)
+            row[i] = std::stod(match[i + 2].str());
+          tsp.data().push_back(Matrix<double, 1>(row));
+        } catch (const std::out_of_range &) {
+          throw std::invalid_argument(
+              "TravelingSalesmanWorld: numeric field out of range in line: " +
+              line);
+        }
       }
     }
     tsp.computeTravelTimes();
