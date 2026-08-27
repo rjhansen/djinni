@@ -189,9 +189,16 @@ public:
   void solve() {
     *_current = *_best;
     _best->setP(1000000);
+    // Reset so a second solve() call (e.g. after setSolutionParameters())
+    // starts from scratch instead of inheriting state left over from the
+    // previous run. This has to happen before tuneTemperature(), which
+    // reads _lambda directly; resetting it any later would leave that
+    // call tuning against a stale pressure weighting from the prior run.
+    _iterations = 0;
+    _bestIter = 0;
+    _lambda = PenaltyFunc::defaultReturnTypeValue;
     initializeParam();
     tuneTemperature();
-    _iterations = 0;
     while ((_iterations <= _minIterations) || (_bestIter < _terminalBestIter)) {
       ++_iterations;
       for (uint32_t count = 0; count < _maxIterations; ++count) {
