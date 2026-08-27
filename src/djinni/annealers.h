@@ -115,9 +115,8 @@ public:
   */
   Annealer(const PenaltyFunc &pfunc, SolutionType &sol, double multT,
            double accept, uint32_t tBI, uint32_t minIter, uint32_t maxIter)
-      : _best(sol), _current(_best),
-        _neighbor(_best), _bestIter(0), _iterations(0),
-        _maxIterations(maxIter), _minIterations(minIter),
+      : _best(sol), _current(_best), _neighbor(_best), _bestIter(0),
+        _iterations(0), _maxIterations(maxIter), _minIterations(minIter),
         _terminalBestIter(tBI), _multiplierT(multT), _acceptProb(accept),
         _currentT(0), _pfunc(pfunc),
         _lambda(PenaltyFunc::defaultReturnTypeValue) {
@@ -140,9 +139,8 @@ public:
 
   Annealer(SolutionType &solution, double multT, double accept, uint32_t tBI,
            uint32_t minIter, uint32_t maxIter)
-      : _best(solution), _current(_best),
-        _neighbor(_best), _bestIter(0), _iterations(0),
-        _maxIterations(maxIter), _minIterations(minIter),
+      : _best(solution), _current(_best), _neighbor(_best), _bestIter(0),
+        _iterations(0), _maxIterations(maxIter), _minIterations(minIter),
         _terminalBestIter(tBI), _multiplierT(multT), _acceptProb(accept),
         _currentT(0), _lambda(PenaltyFunc::defaultReturnTypeValue) {
     validateProbability(multT, "multT");
@@ -160,11 +158,10 @@ public:
   @param sol A solution, populated randomly, to be applied to this annealer
   */
   Annealer(const PenaltyFunc &pfunc, SolutionType &sol)
-      : _best(sol), _current(_best),
-        _neighbor(_best), _bestIter(0), _iterations(0),
-        _maxIterations(0), _minIterations(0), _terminalBestIter(0),
-        _multiplierT(0), _acceptProb(0), _currentT(0), _pfunc(pfunc),
-        _lambda(PenaltyFunc::defaultReturnTypeValue) {}
+      : _best(sol), _current(_best), _neighbor(_best), _bestIter(0),
+        _iterations(0), _maxIterations(0), _minIterations(0),
+        _terminalBestIter(0), _multiplierT(0), _acceptProb(0), _currentT(0),
+        _pfunc(pfunc), _lambda(PenaltyFunc::defaultReturnTypeValue) {}
 
   /*! A no-op destructor.
 

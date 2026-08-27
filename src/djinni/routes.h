@@ -328,7 +328,8 @@ public:
       firstswitch = static_cast<uint32_t>((numCustomers - 1) * _dis(_prng)) + 1;
     uint32_t secondswitch = firstswitch;
     while ((secondswitch == firstswitch) || (secondswitch == firstswitch - 1))
-      secondswitch = static_cast<uint32_t>((numCustomers - 1) * _dis(_prng)) + 1;
+      secondswitch =
+          static_cast<uint32_t>((numCustomers - 1) * _dis(_prng)) + 1;
     uint32_t holder = _solution[firstswitch];
     if (firstswitch < secondswitch) {
       std::copy(_solution.begin(), _solution.begin() + firstswitch,
@@ -385,7 +386,7 @@ protected:
     // makes every "- 1" below safe as unsigned arithmetic instead of the
     // signed scratch space this function used to hold them in.
     assert(_firstswitch >= 1 && _secondswitch >= 1 &&
-          _firstswitch < _solution.size() && _secondswitch < _solution.size());
+           _firstswitch < _solution.size() && _secondswitch < _solution.size());
     double cost = getF();
     uint32_t firstswitch = _firstswitch;
     uint32_t secondswitch = _secondswitch;
@@ -494,10 +495,10 @@ public:
   on every accepted move.
 
   @param route The route to move from. */
-  TravelingSalesmanSolution(TravelingSalesmanSolution<WorldType> &&route) noexcept
+  TravelingSalesmanSolution(
+      TravelingSalesmanSolution<WorldType> &&route) noexcept
       : _w(std::move(route._w)), _solution(std::move(route._solution)),
-        _f(route._f), _p(route._p),
-        _arrivaltime(std::move(route._arrivaltime)),
+        _f(route._f), _p(route._p), _arrivaltime(std::move(route._arrivaltime)),
         _penaltysum(std::move(route._penaltysum)),
         _firstswitch(route._firstswitch), _secondswitch(route._secondswitch),
         _firstarrival(route._firstarrival), _firstpenalty(route._firstpenalty),
@@ -599,7 +600,7 @@ protected:
     // See update()'s assert above: same invariant, same reason it's safe
     // to use unsigned arithmetic for start/i below.
     assert(_firstswitch >= 1 && _secondswitch >= 1 &&
-          _firstswitch < _solution.size() && _secondswitch < _solution.size());
+           _firstswitch < _solution.size() && _secondswitch < _solution.size());
     uint32_t start;
     uint32_t numCustomers = _solution.size();
     const Matrix<double, 2> &travTime = _w->travelTimes();
