@@ -218,7 +218,7 @@ protected:
 #endif
     _lowdeadlines.resize(numCustomers);
     _deadlines.resize(numCustomers);
-    for (uint32_t i = 0; i <= numCustomers - 1; i++) {
+    for (uint32_t i = 0; i < numCustomers; i++) {
 #ifdef USE_BOUNDS_CHECKING
       _lowdeadlines.at(i) = _matrix[i][3];
       _deadlines.at(i) = _matrix[i][4];
