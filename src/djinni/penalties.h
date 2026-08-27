@@ -112,8 +112,12 @@ protected:
 };
 
 //! A class representing classical simulated annealing.
-/*! @warning This class has not been tested.  Please do not rely on its correct
-   operation.
+/*! @warning Exercised by tests/test_simulated.cc, which checks that an
+   Annealer<Simulated, ...> run completes and lands on a sane (non-negative,
+   finite) cost and penalty. That test does not check solution quality, so
+   treat this class as "known to run to completion," not "known to converge
+   well" -- Compression annealing remains the more thoroughly exercised
+   path.
     @author Hansen, Thiede
     @since 2.1
 */

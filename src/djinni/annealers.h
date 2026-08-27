@@ -21,6 +21,7 @@
 #include <iosfwd>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -118,7 +119,10 @@ public:
         _maxIterations(maxIter), _minIterations(minIter),
         _terminalBestIter(tBI), _multiplierT(multT), _acceptProb(accept),
         _currentT(0), _pfunc(pfunc),
-        _lambda(PenaltyFunc::defaultReturnTypeValue) {}
+        _lambda(PenaltyFunc::defaultReturnTypeValue) {
+    validateProbability(multT, "multT");
+    validateProbability(accept, "accept");
+  }
 
   /*! An Annealer constructor appropriate for use with PenaltyFuncs which have a
   default constructor.
@@ -139,7 +143,10 @@ public:
         _neighbor(_best), _bestIter(0), _iterations(0),
         _maxIterations(maxIter), _minIterations(minIter),
         _terminalBestIter(tBI), _multiplierT(multT), _acceptProb(accept),
-        _currentT(0), _lambda(PenaltyFunc::defaultReturnTypeValue) {}
+        _currentT(0), _lambda(PenaltyFunc::defaultReturnTypeValue) {
+    validateProbability(multT, "multT");
+    validateProbability(accept, "accept");
+  }
 
   /*! An Annealer constructor for use when the parameters will be set after
   initialization.
@@ -264,6 +271,8 @@ public:
   @param maxIterations The maximum number of annealing iterations to apply */
   void setParameters(double multT, double accept, uint32_t tBI,
                      uint32_t minIterations, uint32_t maxIterations) {
+    validateProbability(multT, "multT");
+    validateProbability(accept, "accept");
     _multiplierT = multT;
     _acceptProb = accept;
     _terminalBestIter = tBI;
@@ -349,6 +358,24 @@ public:
   [[nodiscard]] PenaltyType getLambda() const { return _lambda; }
 
 protected:
+  /*! Rejects a multT/accept value outside the documented (0.0, 1.0) range.
+
+  Both feed into initializeParam()'s `-sum / log(_acceptProb)`: 0.0 or
+  1.0 make log() return -inf/0, and anything outside [0.0, 1.0] isn't a
+  meaningful probability/multiplier to begin with. Left unchecked, an
+  out-of-range value doesn't fail loudly -- it silently produces
+  +-inf/NaN that propagates through tuneTemperature()'s exit condition
+  and quietly skips real temperature tuning instead of erroring.
+
+  @param v The value to check
+  @param name The parameter name, for the exception message
+  @throws std::invalid_argument if v is not in (0.0, 1.0) */
+  static void validateProbability(double v, const char *name) {
+    if (!(v > 0.0 && v < 1.0))
+      throw std::invalid_argument(std::string("Annealer: ") + name +
+                                  " must be in the range (0.0, 1.0)");
+  }
+
   /*! Performs housekeeping to make sure our parameters are properly set before
    * entering annealing runs.
 
