@@ -1,18 +1,15 @@
 #!/usr/bin/env pwsh
 
-Remove-Item -Recurse -Force build
-New-Item -ItemType Directory -Force -Path build
-Set-Location -Path build
+Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
 $output_file = "djinni_example"
 if ($IsWindows) {
     $output_file += ".exe"
-    cmake -S .. -B . -G "Visual Studio 17 2022"
-    MsBuild.exe djinni.sln /t:djinni_example /p:Platform="x64" /p:Configuration=Release
-    Copy-Item src\Release\$output_file -Destination ..\$output_file
-    Copy-Item ..\src\Dumas-1.set -Destination ..\Dumas-1.set 
-    Set-Location -Path ..
+    meson setup build --buildtype=release
+    ninja -C build
+    Copy-Item build\src\$output_file -Destination .\$output_file
+    Copy-Item src\Dumas-1.set -Destination .\Dumas-1.set
     Remove-Item -Recurse -Force build
-    New-Item -ItemType Directory -Path djinni
+    New-Item -ItemType Directory -Path djinni | Out-Null
     Copy-Item src\djinni.h -Destination djinni\djinni.h
     Copy-Item src\djinni -Destination djinni -Recurse
     Compress-Archive -Path djinni -CompressionLevel Optimal -DestinationPath djinni.zip
@@ -20,7 +17,7 @@ if ($IsWindows) {
     Write-Host @"
 * * * * * * * * * *
 
-Djinni has successfully built.  You have two new files in this directory:
+Djinni has successfully built.  You have three new files in this directory:
 
 * djinni_example.exe, a simple test application you can run
 * Dumas-1.set, a Dumas-formatted file containing a set of cities a
@@ -56,30 +53,24 @@ Happy hacking!
     -- Rob
 "@
 } else {
-    make -j8
     if ("" -ne (groups | Select-String -Raw -Pattern "wheel")) {
-        cmake -S .. -B . -D CMAKE_BUILD_TYPE=Release
-        make -j8
-        $install_path="/usr/local"
-        Write-Host @"
-Installing systemwide...
-"@
-        sudo make install
+        $install_path = "/usr/local"
+        meson setup build --buildtype=release --prefix=$install_path
+        ninja -C build
+        Write-Host "Installing systemwide..."
+        sudo meson install -C build
     } else {
-        cmake -S .. -B . -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=${env:HOME}
-        make -j8
-        Write-Host @"
-Installing to your home directory...
-"@
-        $install_path=$env:HOME
-        make install
+        $install_path = $env:HOME
+        meson setup build --buildtype=release --prefix=$install_path
+        ninja -C build
+        Write-Host "Installing to your home directory..."
+        meson install -C build
     }
 
-    Copy-Item src/$output_file ../$output_file
-    strip ../$output_file
-    Set-Location -Path ..
+    Copy-Item build/src/$output_file ./$output_file
+    strip ./$output_file
     Remove-Item -Recurse -Force build
-    Copy-Item "src\Dumas-1.set" -Destination ".\Dumas-1.set"
+    Copy-Item "src/Dumas-1.set" -Destination "./Dumas-1.set"
     Write-Host @"
 * * * * * * * * * *
 
@@ -87,7 +78,7 @@ Djinni has been installed to $install_path/include
 
 To use Djinni in your own code:
 
-* tell your compiler to add ${install_path/include} to your include path
+* tell your compiler to add ${install_path}/include to your include path
   (-I${install_path}/include works for most compilers)
 * tell your compiler to optimize the code for performance
   (-O2 works for most)

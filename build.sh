@@ -1,30 +1,26 @@
 #!/bin/sh
 
 rm -rf build
-mkdir build
-cd build || exit
 if id -nG "$USER" | grep -qw "wheel"; then
     install_path=/usr/local
-    cmake -S .. -B . -D CMAKE_BUILD_TYPE=Release \
-        -D CMAKE_CXX_FLAGS=-DUSE_BOUNDS_CHECKING
 else
     install_path=${HOME}
-    cmake -S .. -B . -D CMAKE_BUILD_TYPE=Release \
-        -D CMAKE_CXX_FLAGS=-DUSE_BOUNDS_CHECKING \
-        -D CMAKE_INSTALL_PREFIX="${HOME}"
 fi
-make -j8
+
+meson setup build --buildtype=release --prefix="${install_path}" \
+    -Dcpp_args=-DUSE_BOUNDS_CHECKING
+ninja -C build
+
 if id -nG "$USER" | grep -qw "wheel"; then
-    sudo make install
+    sudo meson install -C build
 else
-    make install
+    meson install -C build
 fi
 
-strip src/djinni_example
-mv src/djinni_example ..
-cp ../src/Dumas-1.set ..
+strip build/src/djinni_example
+mv build/src/djinni_example .
+cp src/Dumas-1.set .
 
-cd ..
 rm -rf build
 
 echo
@@ -35,7 +31,7 @@ echo "Djinni has been installed to ${install_path}/include"
 echo
 echo "To use Djinni in your own code:"
 echo
-echo "* tell your compiler to add ${install_path/include} to your include path"
+echo "* tell your compiler to add ${install_path}/include to your include path"
 echo "  (-I${install_path}/include works for most compilers)"
 echo "* tell your compiler to optimize the code for performance"
 echo "  (-O2 works for most)"

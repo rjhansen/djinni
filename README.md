@@ -59,8 +59,9 @@ The latest version of Djinni is always available from the
 ## Building Djinni
 There’s nothing *to* build: it’s just a couple of header files. That
 doesn’t mean we’re leaving you helpless, though: there are two scripts
-included to help you out. You will need [CMake](https://www.cmake.org)
-installed and available on your system’s path in order to use them.
+included to help you out. You will need [Meson](https://mesonbuild.com)
+and [Ninja](https://ninja-build.org) installed and available on your
+system’s path in order to use them.
 
 * **UNIX (including MacOS).** Go into the top of the Djinni directory,
   type `./build.sh`, and wait a little bit. If you have administrator
