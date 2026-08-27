@@ -23,7 +23,9 @@
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <random>
 #include <regex>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -245,9 +247,7 @@ public:
   explicit TravelingSalesmanSolution(const WorldType &w)
       : _w(new WorldType(w)), _f{0.0}, _p{0.0}, _firstswitch{0},
         _secondswitch{0}, _firstarrival{0}, _firstpenalty{0} {
-    _solution.resize(_w->data().size(), 0);
-    _arrivaltime.resize(_solution.size(), 0);
-    _penaltysum.resize(_solution.size(), 0);
+    resizeToWorld();
   }
 
   /*! A constructor that initializes a new WorldType.
@@ -258,9 +258,7 @@ public:
       : _w(new WorldType{}), _f{0.0}, _p{0.0}, _firstswitch{0},
         _secondswitch{0}, _firstarrival{0}, _firstpenalty{0} {
     *_w = WorldType::loadFromDumasFile(worldParam);
-    _solution.resize(_w->data().size(), 0);
-    _arrivaltime.resize(_solution.size(), 0);
-    _penaltysum.resize(_solution.size(), 0);
+    resizeToWorld();
   }
 
   /*! Virtualized for the benefit of future subclassing. */
@@ -478,6 +476,28 @@ public:
   }
 
 protected:
+  //! The fewest customers generateNeighbor()'s 2-opt index picker can
+  //! guarantee a legal (in-bounds, terminating) pair of switch points for.
+  //! Below this, either the picked index falls outside _solution (as low
+  //! as one customer) or no valid secondswitch remains for some draws of
+  //! firstswitch (two or three customers), hanging the rejection loop.
+  static constexpr uint32_t kMinCustomers = 4;
+
+  /*! Sizes _solution/_arrivaltime/_penaltysum to match the loaded world.
+
+  @throws std::invalid_argument if the world has fewer than kMinCustomers
+  customers, since generateNeighbor() cannot safely pick switch points
+  below that size. */
+  void resizeToWorld() {
+    if (_w->data().size() < kMinCustomers)
+      throw std::invalid_argument(
+          "TravelingSalesmanSolution requires at least " +
+          std::to_string(kMinCustomers) + " customers");
+    _solution.resize(_w->data().size(), 0);
+    _arrivaltime.resize(_solution.size(), 0);
+    _penaltysum.resize(_solution.size(), 0);
+  }
+
   /*! Update the travel schedule. */
   void timingUpdate() {
     int start;
