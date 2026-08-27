@@ -165,6 +165,24 @@ public:
   different question. */
   virtual ~Annealer() = default;
 
+  /*! Copying is disabled: _best/_current/_neighbor are shared_ptrs, so a
+  compiler-generated copy would alias the same underlying SolutionType
+  objects as the original rather than duplicating them -- letting the two
+  "independent" Annealers silently corrupt each other's state the moment
+  either one calls solve(). Nothing in this codebase copies an Annealer;
+  each constructor already takes its inputs by reference and makes its
+  own deep copies internally, so there's no legitimate use for a shallow
+  Annealer copy to begin with.
+
+  Move is fine (and re-enabled here since declaring the destructor above
+  already suppresses the implicitly-declared move operations): moving
+  transfers ownership of _best/_current/_neighbor rather than aliasing
+  them, so there's no sharing hazard. */
+  Annealer(const Annealer &) = delete;
+  Annealer &operator=(const Annealer &) = delete;
+  Annealer(Annealer &&) = default;
+  Annealer &operator=(Annealer &&) = default;
+
   /*! Returns this Annealer's PenaltyFunc.
 
   This is the Annealer's own local copy, not the object originally passed to
