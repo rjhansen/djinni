@@ -20,7 +20,18 @@ if cpp.get_argument_syntax() == 'msvc'
     add_project_arguments('/std:c++latest', '/EHsc', '/DUSE_BOUNDS_CHECKING',
         language: 'cpp')
 else
-    add_project_arguments('-std=c++23', language: 'cpp')
+    # -Werror=sign-conversion: a 2026-08 review pass eliminated every
+    # int/uint32_t mismatch this warning found (49 sites, all real --
+    # see git history around that date). Making it a hard error keeps it
+    # that way instead of letting a future change silently reintroduce
+    # the mismatch class that produced this codebase's actual
+    # out-of-bounds/underflow bugs. Scoped to this one warning, not a
+    # general -Werror policy. No MSVC equivalent here: its closest
+    # warnings (C4245/C4365) have different semantics and aren't enabled
+    # by this project's warning level, so MSVC builds rely on the other
+    # platforms' CI legs to catch this class of regression instead.
+    add_project_arguments('-std=c++23', '-Wsign-conversion',
+        '-Werror=sign-conversion', language: 'cpp')
 endif
 
 if get_option('faster')
