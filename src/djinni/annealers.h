@@ -165,14 +165,18 @@ public:
   different question. */
   virtual ~Annealer() = default;
 
-  /*! Copying is disabled: _best/_current/_neighbor are shared_ptrs, so a
-  compiler-generated copy would alias the same underlying SolutionType
-  objects as the original rather than duplicating them -- letting the two
-  "independent" Annealers silently corrupt each other's state the moment
-  either one calls solve(). Nothing in this codebase copies an Annealer;
-  each constructor already takes its inputs by reference and makes its
-  own deep copies internally, so there's no legitimate use for a shallow
-  Annealer copy to begin with.
+  /*! Copying is disabled. _best/_current/_neighbor are unique_ptrs --
+  exclusively owned, never shared with anything outside this Annealer --
+  so this is now enforced implicitly by the compiler too; the explicit
+  deletion here just documents the reason rather than leaving it to a
+  generic "use of deleted function" error. (Before these became
+  unique_ptrs, they were shared_ptrs with no such protection: a
+  compiler-generated copy would have aliased the same underlying
+  SolutionType objects instead of duplicating them, letting two
+  "independent" Annealers silently corrupt each other's state.) Nothing
+  in this codebase copies an Annealer; each constructor already takes
+  its inputs by reference and makes its own deep copies internally, so
+  there's no legitimate use for a copy to begin with.
 
   Move is fine (and re-enabled here since declaring the destructor above
   already suppresses the implicitly-declared move operations): moving
@@ -269,9 +273,9 @@ public:
 
   @param foo A char* containing the solution parameters */
   void setSolutionParameters(const char *foo) {
-    _best = std::make_shared<SolutionType>(foo);
-    _current = std::make_shared<SolutionType>(*_best);
-    _neighbor = std::make_shared<SolutionType>(*_best);
+    _best = std::make_unique<SolutionType>(foo);
+    _current = std::make_unique<SolutionType>(*_best);
+    _neighbor = std::make_unique<SolutionType>(*_best);
   }
 
   /*! Allows for an Annealer object's internal state to be dumped in
@@ -441,7 +445,7 @@ protected:
     _lambda = _pfunc(_iterations);
   }
 
-  std::shared_ptr<SolutionType> _best, _current, _neighbor;
+  std::unique_ptr<SolutionType> _best, _current, _neighbor;
 
   uint32_t _bestIter, _iterations, _maxIterations{}, _minIterations{},
       _terminalBestIter;
