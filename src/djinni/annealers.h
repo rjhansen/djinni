@@ -424,10 +424,14 @@ protected:
   double _multiplierT{}, _acceptProb{}, _currentT{};
   PenaltyFunc _pfunc;
   PenaltyType _lambda;
-  inline static std::random_device rd{};
-  inline static std::mt19937_64 prng{rd()};
-  inline static std::uniform_real_distribution<> urd{0.0, 1.0};
-  static double randomReal() { return urd(prng); }
+
+  // Per-instance, not static: a shared engine across every Annealer of a
+  // given type would race if two Annealers ran concurrently on separate
+  // threads, and would make every Annealer's "independent" run secretly
+  // correlated with every other's.
+  std::mt19937_64 _prng{std::random_device{}()};
+  std::uniform_real_distribution<> _urd{0.0, 1.0};
+  double randomReal() { return _urd(_prng); }
 };
 
 /*! An overridden operator<< which serves as a proxy for an Annealer's dump()

@@ -292,16 +292,10 @@ public:
     neighbor.setF(getF());
     neighbor.setP(getP());
     while (0 == firstswitch)
-      firstswitch = static_cast<int>((numCustomers - 1) *
-                                     TravelingSalesmanSolution::dis(
-                                         TravelingSalesmanSolution::prng)) +
-                    1;
+      firstswitch = static_cast<int>((numCustomers - 1) * _dis(_prng)) + 1;
     uint32_t secondswitch = firstswitch;
     while ((secondswitch == firstswitch) || (secondswitch == firstswitch - 1))
-      secondswitch = static_cast<int>((numCustomers - 1) *
-                                      TravelingSalesmanSolution::dis(
-                                          TravelingSalesmanSolution::prng)) +
-                     1;
+      secondswitch = static_cast<int>((numCustomers - 1) * _dis(_prng)) + 1;
     int holder = _solution[firstswitch];
     if (firstswitch < secondswitch) {
       std::copy(_solution.begin(), _solution.begin() + firstswitch,
@@ -396,16 +390,49 @@ public:
       _solution[i] = static_cast<int>(i);
     auto iter = _solution.begin();
     ++iter;
-    std::shuffle(iter, _solution.end(), TravelingSalesmanSolution::prng);
+    std::shuffle(iter, _solution.end(), _prng);
   }
 
   /*! Copy constructor.
+
+  Deliberately does not copy _prng/_dis: the new object gets its own
+  freshly-seeded engine (via their default member initializers) rather
+  than starting in lockstep with route's. Annealer relies on this --
+  _best/_current/_neighbor are all copy-constructed from one another, and
+  if they shared or cloned RNG state, their "independent" random streams
+  would actually be correlated.
+
   @param route The route to copy from. */
   TravelingSalesmanSolution(const TravelingSalesmanSolution<WorldType> &route)
       : _w(route._w), _solution(route._solution), _f(route._f), _p(route._p),
         _arrivaltime(route._arrivaltime), _penaltysum(route._penaltysum),
         _firstswitch(route._firstswitch), _secondswitch(route._secondswitch),
         _firstarrival(route._firstarrival), _firstpenalty(route._firstpenalty) {
+  }
+
+  /*! Copy assignment operator.
+
+  Like the copy constructor, deliberately leaves _prng/_dis alone: this
+  object keeps generating from its own independent stream across the
+  assignment, rather than adopting route's.
+
+  @param route The route to copy from.
+  @return *this, for chaining. */
+  TravelingSalesmanSolution &
+  operator=(const TravelingSalesmanSolution<WorldType> &route) {
+    if (this == &route)
+      return *this;
+    _w = route._w;
+    _solution = route._solution;
+    _f = route._f;
+    _p = route._p;
+    _arrivaltime = route._arrivaltime;
+    _penaltysum = route._penaltysum;
+    _firstswitch = route._firstswitch;
+    _secondswitch = route._secondswitch;
+    _firstarrival = route._firstarrival;
+    _firstpenalty = route._firstpenalty;
+    return *this;
   }
 
   /*! Dump our current path to an output stream.
@@ -487,9 +514,12 @@ protected:
   std::vector<double> _arrivaltime;
   std::vector<double> _penaltysum;
   uint32_t _firstswitch, _secondswitch, _firstarrival, _firstpenalty;
-  inline static std::random_device rd{};
-  inline static std::mt19937_64 prng{rd()};
-  inline static std::uniform_real_distribution<> dis{0.0, 1.0};
+
+  // Per-instance, not static: see the copy constructor and copy
+  // assignment operator above for why sharing (or even cloning) this
+  // across instances would be wrong, not just a missed optimization.
+  std::mt19937_64 _prng{std::random_device{}()};
+  std::uniform_real_distribution<> _dis{0.0, 1.0};
 };
 
 /*! An operator<< overloaded for TravelingSalesmanSolution.
